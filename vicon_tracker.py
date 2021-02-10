@@ -1,9 +1,14 @@
 from python_vicon import PyVicon
 
+# Vicon Tracker retrieves objects from the vicon system
+# these objects possess detailed information about the location/orientation of the object
+# and the different points this object is composed of
+
 
 class ObjectTracker():
 
     def connect(self):
+        # vicon computer address
         self.cfg = {
             "ip_address": '129.217.152.31',
             "port": '801'
@@ -25,6 +30,7 @@ class ObjectTracker():
         print("Disconneced successfully")
         return 0
 
+    # retrieves the marker names of a given obejct
     def aquire_Object_Marker(self, object_name=''):
         self.aquire_Frame()
         try:
@@ -32,6 +38,7 @@ class ObjectTracker():
         except:
             print("MarkerNames: Name not found in subjects")
 
+    # retrieves the marker positions of a given obejct
     def aquire_Object_MarkerPositions(self, object_name=''):
         self.aquire_Frame()
         try:
@@ -39,6 +46,7 @@ class ObjectTracker():
         except:
             print("MarkerPositions: Name not found in subjects")
 
+    # retrieves the position of a given obejct
     def aquire_Object(self, object_name=''):
         self.aquire_Frame()
         try:
@@ -46,10 +54,12 @@ class ObjectTracker():
         except:
             print("AquireObject: Name not found in subjects")
 
+    # retrieves all currently subsribed objects
     def aquire_subjects(self):
         self.aquire_Frame()
         return self.subjects
 
+    # loads the information of a captured frame from the vicon system
     def aquire_Frame(self):
         try:
             self.client.frame()

@@ -3,6 +3,8 @@ import cv2
 import sys
 import numpy as np
 
+# simple class to display camera feed of multiple cameras
+
 
 class Processor(Thread):
     def __init__(self, cameras):
@@ -11,6 +13,7 @@ class Processor(Thread):
 
         self.lastframe = 0
 
+    # retrieves image from camera and preprocesses image to display it properly
     def getImage(self, camera, resolution=(None, None), rotate=(False, False), mask=False):
         image = camera.getImage()
         if image is None:
@@ -45,6 +48,7 @@ class Processor(Thread):
             # concatanate image Horizontally
             Hori = np.concatenate(images, axis=1)
 
+            # Displays FPS
             sys.stdout.write('\rFramerates: {}'.format(
                 [round(camera.fps, 2) for camera in self.cameras]))
             sys.stdout.flush()

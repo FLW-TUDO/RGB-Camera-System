@@ -4,9 +4,14 @@ import os
 import cv2
 import cvb
 from time import time
-import sys
 
 from vicon_tracker import ObjectTracker
+
+# Camera class for accessing the cvb cameras
+# Calibration functions are using cv2 function to calibrate the camera
+# Vicon Magic Wand v2 is used to capture object points
+
+DEBUG = True
 
 
 class Camera(Thread):
@@ -24,8 +29,8 @@ class Camera(Thread):
         self.rotate_vertical = True
         self.rotate_horizontal = True
         factor = 4
-        self.resolution = (int(2592 / factor), int(2048/ factor))
-        
+        self.resolution = (int(2592 / factor), int(2048 / factor))
+
         self.lastframe = time()
         self.fps = 0
 
@@ -60,6 +65,8 @@ class Camera(Thread):
         except:
             self.mask = self.calculate_mask()
 
+    # takes a fixed quantity of images and calculates a mask
+    # unchanging image points are considered background
     def calculate_mask(self, kernelsize=11, threshold=100):
         print("Started camera %s masking" % self.id)
         kernel = np.ones((kernelsize, kernelsize), np.uint8)
@@ -84,10 +91,13 @@ class Camera(Thread):
               (self.id, masking_count))
         return mask
 
+    # extracts all centriods from an image
+    # since the Vicon Magic Wand v2 has 5 bright LEDs the brightest spots of an image are chosen
     def calibration(self, image):
         kernel = np.ones((3, 3), np.uint8)
         centroids_update = np.zeros((5, 2), dtype=np.uint8)
         gray_frame = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # removes noise/background from the image and leaves the LEDs as is
         ret, binary_frame = cv2.threshold(
             gray_frame, 240, 255, cv2.THRESH_BINARY)
         if ret:
@@ -100,6 +110,9 @@ class Camera(Thread):
                 stats, centroids, 5)
             return ret, centroids_update
 
+    # extracts the calibration pattern from a single image
+    # Vicon Magic Wand v2 is used as calibration pattern
+    # this function connects the centriods of the image to their semantic counter parts of the Magic Wand
     def findCalibrationPattern(self, stats, centroids, number_of_calibrationpoints):
         ret = False
         if np.shape(centroids)[0] > number_of_calibrationpoints:
@@ -211,6 +224,7 @@ class Camera(Thread):
     def calcAreaTriangle(self, p1, p2, p3):
         return 0.5*abs((p2[0]-p1[0])*(p3[1]-p2[1])-(p3[0]-p2[0])*(p2[1]-p1[1]))
 
+    # retrieves vicon data
     def getViconData(self):
         data = self.tracker.aquire_Object_MarkerPositions('ViconWand')
         x0 = np.asarray(data[4])
@@ -220,12 +234,14 @@ class Camera(Thread):
         x4 = np.asarray(data[1])
         return np.array([[x0, x1, x2, x3, x4]])
 
+    # determines for each image the object and image points
     def processCalib(self, image, image_points, object_points, image_points_extrinsic, object_points_extrinsic):
+        # retrieves the image points
         ret, centroid = self.calibration(image)
         if ret:
+            # gets the object points through vicon
             viconpoints = self.getViconData()
             image_points.append(np.array([centroid]))
-            # print("Kamera %s : " % self.camera.id + str(len(centroid)) + "_" + str(len(viconpoints[0])))
             object_points.append(np.array(viconpoints))
             image_points_extrinsic = np.vstack(
                 (image_points_extrinsic, centroid))
@@ -235,7 +251,6 @@ class Camera(Thread):
                 x = cen.astype(int)[0]
                 y = cen.astype(int)[1]
                 image = cv2.circle(image, (x, y), 5, (255, 255, 255), -1)
-        # image = np.maximum(self.cumulative_points_image, image)
         return image
 
     def calculateIntrinsics(self, image_points, object_points, image_points_extrinsic, object_points_extrinsic):
@@ -260,7 +275,7 @@ class Camera(Thread):
         object_points = np.array(object_points)
         image_points = np.array(image_points)
 
-        if True:
+        if DEBUG:
             np.save('object_points.npy', object_points)
             np.save('image_points.npy', image_points)
             np.save('image_points_extrinsic.npy', image_points_extrinsic)
@@ -272,8 +287,12 @@ class Camera(Thread):
             print('Objectpoints ext: ', object_points_extrinsic.shape)
 
         if len(object_points) > 0 and len(object_points) == len(image_points):
-            K = np.array([[367.1434646940849, 0.0, 304.250873277727], [0.0, 368.8458905420833, 223.58756315623015], [0.0, 0.0, 1.0]])
-            D = np.array([[0.10666939085590753], [0.432679650635747], [-0.9362253755241718], [0.6913429032804886]])
+
+            # this is a test part replacing the intrinsic calculations
+            K = np.array([[367.1434646940849, 0.0, 304.250873277727], [
+                         0.0, 368.8458905420833, 223.58756315623015], [0.0, 0.0, 1.0]])
+            D = np.array([[0.10666939085590753], [0.432679650635747],
+                          [-0.9362253755241718], [0.6913429032804886]])
             ret, _, tvec = cv2.solvePnP(
                 object_points_extrinsic[1:], image_points_extrinsic[1:], K, D)
             if ret:
@@ -292,8 +311,13 @@ class Camera(Thread):
                   str(len(image_points)) + "__" + str(len(object_points)))
             print("List are not the same length or no points found")
 
+    # for calibration purposes the camera switches to internal mode
+    # processing the images and calculating intrinsics and extrinsics
+    # without delivering a feed
     def calibrate(self):
         self.running = False
+
+        # calibration parameters
         image_points = []
         image_points_extrinsic = np.array([0, 0])
         object_points = []
@@ -310,21 +334,20 @@ class Camera(Thread):
             image, status = self.stream.wait()
             if status == cvb.WaitStatus.Ok:
                 image = cvb.as_array(image)
-
                 image = self.processCalib(image, image_points, object_points, image_points_extrinsic,
-                                               object_points_extrinsic)
-                
-                image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-                image = image * self.mask
-                image = cv2.resize(image, self.resolution)
-                image = cv2.flip(image, 0)
-                image = cv2.flip(image, 1)
-                
-                cv2.imshow('Calibration', image)
-                # press q to exit
-                if cv2.waitKey(5) == ord('q'):
-                    cv2.destroyAllWindows()
-                    break
+                                          object_points_extrinsic)
+                if DEBUG:
+                    image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+                    image = image * self.mask
+                    image = cv2.resize(image, self.resolution)
+                    image = cv2.flip(image, 0)
+                    image = cv2.flip(image, 1)
+
+                    cv2.imshow('Calibration', image)
+                    # press q to end the calibration recording
+                    if cv2.waitKey(5) == ord('q'):
+                        cv2.destroyAllWindows()
+                        break
 
         self.closeStream()
         self.tracker.disconnect()
