@@ -5,21 +5,28 @@ from glob import glob
 # simple tool to get single images from the camera feed
 # used for debugging purposes
 
-images = glob('./images/chessboard/*.jpg')
-starting_number = 0
+folder = 'chessboard'
+
+images = glob('./images/{}/*.jpg'.format(folder))
+numbers = []
 for fname in images:
     name = fname.split('/')[-1].split('.')[0]
     try:
-        print(name)
-        starting_number = max(int(name), starting_number) + 1
+        numbers.append(int(name))
     except:
         pass
 
+freenumbers = []
+if len(numbers) > 0:
+    for number in range(numbers[-1]):
+        if number not in numbers:
+            freenumbers.append(number)
 
 cam = Camera(2)
-index = starting_number
+index = 0
 
 while True:
+    input('Enter to continue.....')
     image = cam.getImage()
     if image is None:
         continue
@@ -27,9 +34,11 @@ while True:
     image = cv2.flip(image, 0)
     image = cv2.flip(image, 1)
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    
+    if len(freenumbers) > 0:
+        index = freenumbers.pop(0)
+    else:
+        index += 1
 
-    filename = './images/chessboard/{}.jpg'.format(index)
+    filename = './images/{}/{}.jpg'.format(folder, index)
     cv2.imwrite(filename, image)
-    index += 1
-
-    input('Enter to continue.....')
