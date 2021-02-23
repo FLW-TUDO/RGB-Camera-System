@@ -2,7 +2,7 @@ from glob import glob
 import numpy as np
 import cv2
 assert cv2.__version__[
-    0] == '3', 'The fisheye module requires opencv version >= 3.0.0'
+    0] >= '3', 'The fisheye module requires opencv version >= 3.0.0'
 
 # static calibration script for camera calibration from recorded images
 
@@ -11,7 +11,9 @@ images = images = glob('./images/chessboard/*.jpg')
 CHECKERBOARD = (7, 5)
 
 subpix_criteria = (cv2.TERM_CRITERIA_EPS+cv2.TERM_CRITERIA_MAX_ITER, 30, 0.1)
-calibration_flags = cv2.fisheye.CALIB_RECOMPUTE_EXTRINSIC + cv2.fisheye.CALIB_CHECK_COND + cv2.fisheye.CALIB_FIX_SKEW
+calibration_flags = cv2.fisheye.CALIB_RECOMPUTE_EXTRINSIC + \
+    cv2.fisheye.CALIB_CHECK_COND + cv2.fisheye.CALIB_FIX_SKEW
+
 
 def create_points(images):
     objp = np.zeros((1, CHECKERBOARD[0]*CHECKERBOARD[1], 3), np.float32)
@@ -87,5 +89,6 @@ def display_undistored(image, K, D):
 
 if __name__ == "__main__":
     objpoints, imgpoints, _img_shape = create_points(images)
-    K, D, rvecs, tvecs, N_OK = calculate_intrinsics(objpoints, imgpoints, _img_shape)
+    K, D, rvecs, tvecs, N_OK = calculate_intrinsics(
+        objpoints, imgpoints, _img_shape)
     display_undistored(images[0], K, D)
