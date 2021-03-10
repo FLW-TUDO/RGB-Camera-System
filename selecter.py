@@ -26,6 +26,7 @@ def chessboard(img):
         corners2 = cv2.cornerSubPix(
             gray, corners, (11, 11), (-1, -1), criteria)
         # Draw and display the corners
+        print(corners2)
         img = cv2.drawChessboardCorners(img, (a, b), corners2, ret)
         cv2.imshow('img', img)
         key = cv2.waitKey(0)
@@ -62,7 +63,7 @@ def charuco(gray):
 
 # simple script to delete not usable images
 if __name__ == "__main__":
-    images = glob('./images/*.jpg')
+    images = glob('./images/chessboard/*.jpg')
     # images = glob('./images/charuco/*.jpg')
 
     for fname in images:

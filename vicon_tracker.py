@@ -70,11 +70,12 @@ class ObjectTracker():
 
 
 if __name__ == "__main__":
-    object_name = 'test_box'
+    object_name = 'chessboard'
 
     ob = ObjectTracker()
 
     ob.connect()
     print(ob.aquire_Object_Marker(object_name))
+    print(ob.aquire_Object_MarkerPositions(object_name))
 
     ob.disconnect()

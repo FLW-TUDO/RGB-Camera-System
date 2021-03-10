@@ -1,10 +1,7 @@
 import cv2
 import numpy as np
-from vicon_tracker import ObjectTracker
-from camera import Camera
-
-tracker = ObjectTracker()
-tracker.connect()
+from glob import glob
+import json
 
 
 objectname = 'checkerboard'
@@ -12,9 +9,7 @@ origin_distance = 52.14
 a = 7
 b = 5
 subpix_criteria = (cv2.TERM_CRITERIA_EPS+cv2.TERM_CRITERIA_MAX_ITER, 100, 1e-6)
-objp = np.zeros((1, a*b, 3), np.float32)
-objp[0, :, :2] = np.mgrid[0:a, 0:b].T.reshape(-1, 2)
-axis = np.array([[3, 0, 0], [0, 3, 0], [0, 0, -3]],
+axis = np.array([[260, 0, 0], [0, -260, 0], [0, 0, 260]],
                 dtype=np.float32).reshape(-1, 3)
 
 
@@ -41,20 +36,7 @@ def create_points(img):
         cv2.imshow('img', img)
         cv2.waitKey(0)
 
-        return objp, corners
-
-
-def get_checkerboard_origin():
-    marker_pos = tracker.aquire_Object_MarkerPositions('checkerboard')
-    marker1 = marker_pos[0]
-    marker2 = marker_pos[2]
-
-    vector = [x - y for x, y in zip(marker2, marker1)]
-    length = np.sqrt(np.sum([element**2 for element in vector]))
-    final_position = [element * (origin_distance / length)
-                      for element in vector]
-
-    return [element + position for element, position in zip(final_position, marker1)]
+        return corners
 
 
 def calibrate(object_points, image_points):
@@ -88,47 +70,35 @@ def undistort(img):
     return undistorted_img
 
 
-def correct_image(image):
-    image = undistort(image)
-    image = cv2.resize(original_image, (int(2592 / 2), int(2048 / 2)))
-    image = cv2.flip(image, 0)
-    image = cv2.flip(image, 1)
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    return image
-
-
 if __name__ == "__main__":
-    cam = Camera(2)
-    imgpoints = []
-    objpoints = []
-    while True:
-        original_image = cam.getImage()
-        if original_image is None:
-            continue
-        image = correct_image(original_image)
-        original_image = correct_image(original_image)
+    with open('./images/chessboard/data.json') as f:
+        data = json.load(f)
+    for fName in glob('./images/chessboard/*.png'):
+        image = cv2.imread(fName)
+        image = cv2.resize(image, (int(2592/2), int(2048/2)))
 
         cv2.imshow('Camera', image)
-        key = cv2.waitKey(20)
-        if key == 32:
-            object_point, image_point = create_points(original_image)
-            rvecs, tvecs = calibrate(object_point, image_point)
+        key = cv2.waitKey(0)
+        image_point = create_points(image)
+        object_point = np.array(data[fName.split('/')[-1]])
+        object_point = np.array([
+            [point - object_point[0] for point in object_point]])
 
-            position = get_checkerboard_origin()
-            print('Position:', position)
+        print(object_point)
 
-            imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, K, D)
-            image = draw(original_image, image_point, imgpts)
-            cv2.imshow('img', image)
-            key = cv2.waitKey(0)
+        rvecs, tvecs = calibrate(object_point, image_point)
 
-            rotM = cv2.Rodrigues(rvecs)[0]
-            cameraPosition = -np.matrix(rotM).T * np.matrix(tvecs)
+        imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, K, D)
+        image = draw(image, image_point, imgpts)
+        cv2.imshow('img', image)
+        key = cv2.waitKey(0)
 
-            print(cameraPosition)
+        rotM = cv2.Rodrigues(rvecs)[0]
+        cameraPosition = -np.matrix(rotM).T * np.matrix(tvecs)
+
+        print('Camera Position')
+        print(cameraPosition)
 
         if key == 113:
             cv2.destroyAllWindows()
             break
-
-    cam.close()
