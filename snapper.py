@@ -1,6 +1,7 @@
 from camera import Camera
 import cv2
 from glob import glob
+import sys
 
 # simple tool to get single images from the camera feed
 # used for debugging purposes
@@ -26,7 +27,6 @@ cam = Camera(2)
 index = 0
 
 while True:
-    input('Enter to continue.....')
     image = cam.getImage()
     if image is None:
         continue
@@ -34,11 +34,21 @@ while True:
     image = cv2.flip(image, 0)
     image = cv2.flip(image, 1)
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    
-    if len(freenumbers) > 0:
-        index = freenumbers.pop(0)
-    else:
-        index += 1
 
-    filename = './images/{}/{}.jpg'.format(folder, index)
-    cv2.imwrite(filename, image)
+    cv2.imshow('Camera', image)
+    key = cv2.waitKey(10)
+    if key == 113:
+        cv2.destroyAllWindows()
+        break
+    if key == 32:
+        if len(freenumbers) > 0:
+            index = freenumbers.pop(0)
+        else:
+            index += 1
+        sys.stdout.write('\rPicture taken: {}'.format(index))
+        sys.stdout.flush()
+
+        filename = './images/{}/{}.png'.format(folder, index)
+        cv2.imwrite(filename, image)
+
+cam.close()

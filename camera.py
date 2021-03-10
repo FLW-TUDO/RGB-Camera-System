@@ -289,10 +289,13 @@ class Camera(Thread):
         if len(object_points) > 0 and len(object_points) == len(image_points):
 
             # this is a test part replacing the intrinsic calculations
-            K = np.array([[367.1434646940849, 0.0, 304.250873277727], [
-                         0.0, 368.8458905420833, 223.58756315623015], [0.0, 0.0, 1.0]])
-            D = np.array([[0.10666939085590753], [0.432679650635747],
-                          [-0.9362253755241718], [0.6913429032804886]])
+            K = np.array([[444.01212317, 0., 317.87966175],
+                          [0., 442.20562833, 264.72142874],
+                          [0., 0., 1.]])
+            D = np.array([[0.22847352],
+                          [-0.22746739],
+                          [0.70298454],
+                          [-0.04718649]])
             ret, _, tvec = cv2.solvePnP(
                 object_points_extrinsic[1:], image_points_extrinsic[1:], K, D)
             if ret:
