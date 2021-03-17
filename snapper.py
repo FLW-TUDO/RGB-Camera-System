@@ -9,7 +9,8 @@ import json
 # simple tool to get single images from the camera feed
 # used for debugging purposes
 
-folder = 'chessboard'
+folder = 'intrinsics'
+save_json = False
 
 tracker = ObjectTracker()
 tracker.connect()
@@ -29,18 +30,22 @@ if len(numbers) > 0:
         if number not in numbers:
             freenumbers.append(number)
 
-cam = Camera(2)
-index = 0
+if freenumbers == [] and numbers != []:
+    index = numbers[-1]
+else:
+    index = 0
+
 positions = {}
+cam = Camera(2)
+
 
 while True:
     image = cam.getImage()
     if image is None:
         continue
-    image = cv2.resize(image, (int(2592 / 4), int(2048 / 4)))
     image = cv2.flip(image, 0)
     image = cv2.flip(image, 1)
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     cv2.imshow('Camera', image)
     key = cv2.waitKey(10)
@@ -56,20 +61,21 @@ while True:
         sys.stdout.flush()
 
         filename = './images/{}/{}.png'.format(folder, index)
+        cv2.imwrite(filename, image)
         # 2 ---- 3
         # | \
         # 1   \
         #       9
-        marker_positions = tracker.aquire_Object_MarkerPositions('chessboard')
-        chessboard_positions = getChessboardPoints(
-            marker_positions[1], marker_positions[2], marker_positions[0], validation_point=marker_positions[8])
-        positions['{}.png'.format(index)] = [list(position)
-                                             for position in chessboard_positions]
-        cv2.imwrite(filename, image)
+        if save_json:
+            marker_positions = tracker.aquire_Object_MarkerPositions(
+                'chessboard')
+            chessboard_positions = getChessboardPoints(
+                marker_positions[1], marker_positions[2], marker_positions[0], validation_point=marker_positions[8])
+            positions['{}.png'.format(index)] = [list(position)
+                                                 for position in chessboard_positions]
 
-with open('./images/{}/data.json'.format(folder), 'w') as f:
-    json.dump(positions, f)
-
-print(positions)
+if save_json:
+    with open('./images/{}/data.json'.format(folder), 'w') as f:
+        json.dump(positions, f)
 
 cam.close()
