@@ -9,7 +9,7 @@ import json
 # simple tool to get single images from the camera feed
 # used for debugging purposes
 
-folder = 'intrinsics'
+folder = 'snapper'
 save_json = False
 
 tracker = ObjectTracker()
