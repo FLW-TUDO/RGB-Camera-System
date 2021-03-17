@@ -1,8 +1,9 @@
 from camera import Camera
 import cv2
 import numpy as np
+import sys
 
-
+scale = 130
 a = 7
 b = 5
 
@@ -18,9 +19,11 @@ criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 objp = np.zeros((a*b, 3), np.float32)
 objp[:, :2] = np.mgrid[0:a, 0:b].T.reshape(-1, 2)
+objp *= scale
 
 
 axis = np.float32([[3, 0, 0], [0, 3, 0], [0, 0, 3]]).reshape(-1, 3)
+axis *= scale
 
 
 def drawLine(img, corners, imgpts, line_width=3):
@@ -36,6 +39,7 @@ def drawLine(img, corners, imgpts, line_width=3):
 
 axis_cube = np.float32([[0, 0, 0], [0, 3, 0], [3, 3, 0], [3, 0, 0],
                         [0, 0, -3], [0, 3, -3], [3, 3, -3], [3, 0, -3]])
+axis_cube *= scale
 
 
 def drawCube(img, corners, imgpts, line_width=3):
@@ -140,8 +144,8 @@ while True:
         if not valid_point(imgpts_line, corners2, (2592, 2048)) or not valid_point(imgpts_cube, corners2, (2592, 2048)):
             continue
         else:
-            # img = drawLine(image, corners2, imgpts_line, 10)
-            img = drawCube(image, corners2, imgpts_cube, 8)
+            img = drawLine(image, corners2, imgpts_line, 10)
+            # img = drawCube(image, corners2, imgpts_cube, 8)
             img = undistort(img)
             img = crop(img, corners2[0][0], int(2592/2), int(2048/2))
             cv2.imshow('Camera', img)
@@ -149,6 +153,8 @@ while True:
             if key == 113:
                 cv2.destroyAllWindows()
                 break
+
+            print(f'Translation:\n {tvecs}')
     else:
         img = undistort(img)
         img = cv2.resize(img, (int(2592/2), int(2048/2)))
