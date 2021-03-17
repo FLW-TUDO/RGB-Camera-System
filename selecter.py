@@ -8,10 +8,10 @@ aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_100)
 board = cv2.aruco.CharucoBoard_create(4, 3, 1, .8, aruco_dict)
 
 # termination criteria
-criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.00001)
+criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.00001)
 
-a = 5   # columns
-b = 3   # rows
+a = 7   # columns
+b = 5   # rows
 objp = np.zeros((1, a*b, 3), np.float32)
 objp[0, :, :2] = np.mgrid[0:a, 0:b].T.reshape(-1, 2)
 
@@ -19,15 +19,15 @@ objp[0, :, :2] = np.mgrid[0:a, 0:b].T.reshape(-1, 2)
 def chessboard(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # Find the chess board corners
-    ret, corners = cv2.findChessboardCorners(gray, (a, b), None)
+    ret, corners = cv2.findChessboardCorners(gray, (a, b), criteria)
 
     # If found, add object points, image points (after refining them)
     if ret == True:
         corners2 = cv2.cornerSubPix(
             gray, corners, (11, 11), (-1, -1), criteria)
         # Draw and display the corners
-        print(corners2)
         img = cv2.drawChessboardCorners(img, (a, b), corners2, ret)
+        img = cv2.resize(img, (int(2592 / 2), int(2048 / 2)))
         cv2.imshow('img', img)
         key = cv2.waitKey(0)
 
@@ -63,7 +63,7 @@ def charuco(gray):
 
 # simple script to delete not usable images
 if __name__ == "__main__":
-    images = glob('./images/chessboard/*.jpg')
+    images = glob('./images/intrinsics/*.png')
     # images = glob('./images/charuco/*.jpg')
 
     for fname in images:
@@ -74,3 +74,5 @@ if __name__ == "__main__":
 
         # find charuco corners
         # charuco(gray)
+        if not res:
+            os.remove(fname)
