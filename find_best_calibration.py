@@ -1,5 +1,6 @@
 from glob import glob
 import itertools
+import sys
 import numpy as np
 import copy
 import os
@@ -124,7 +125,10 @@ if __name__ == "__main__":
     top = [(10., [])]
 
     # create initial results with only initial_perm_length images each time
-    for permutation in permutations:
+    for index, permutation in enumerate(permutations):
+        sys.stdout.write(
+            f'\rProgress: {round(index / len(permutations) * 100, 2)}%')
+        sys.stdout.flush()
         new_objpoints = [objpoints[index] for index in permutation]
         new_imgpoints = [imgpoints[index] for index in permutation]
         try:
