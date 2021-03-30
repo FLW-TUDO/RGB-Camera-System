@@ -31,6 +31,9 @@ class Processor(Thread):
             image = cv2.flip(image, 1)
         return image
 
+    def dummyImage(self, resolution=(None, None)):
+        return np.zeros((resolution[0], resolution[1], 3))
+
     def stop(self):
         self.running = False
         cv2.destroyAllWindows()
@@ -39,21 +42,36 @@ class Processor(Thread):
         self.running = True
         print('Displaying Cameras {}. Press q to exit.'.format(
             [i for i in range(len(self.cameras))]))
+
+        dummyImage = None
+        length = len(self.cameras)
+        if length % 2 == 1:
+            dummyImage = True
+            print('Be careful you are using an odd number of cameras.')
+
+        resolution = (int(1920/(int(length/2))), int(1080 / 2))
+
         while self.running:
             images = []
             for camera in self.cameras:
                 images.append(self.getImage(
-                    camera, resolution=camera.resolution, rotate=(True, True), mask=False))
+                    camera, resolution=resolution, rotate=(True, True), mask=False))
+
+            if dummyImage:
+                _ = images.pop(-1)
 
             # concatanate image Horizontally
-            Hori = np.concatenate(images, axis=1)
+            Hori1 = np.concatenate(images[:int(length/2)], axis=1)
+            Hori2 = np.concatenate(images[int(length/2):], axis=1)
+
+            image = np.vstack((Hori1, Hori2))
 
             # Displays FPS
             sys.stdout.write('\rFramerates: {}'.format(
                 [round(camera.fps, 2) for camera in self.cameras]))
             sys.stdout.flush()
 
-            cv2.imshow('HORIZONTAL', Hori)
+            cv2.imshow('Cameras', image)
             if cv2.waitKey(50) == ord('q'):
                 cv2.destroyAllWindows()
                 break
