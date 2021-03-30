@@ -36,7 +36,7 @@ else:
     index = 0
 
 positions = {}
-cam = Camera(2)
+cam = Camera(3)
 
 
 while True:
@@ -46,9 +46,10 @@ while True:
     image = cv2.flip(image, 0)
     image = cv2.flip(image, 1)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = cv2.resize(image, (int(2592 / 2), int(2048 / 2)))
 
     cv2.imshow('Camera', image)
-    key = cv2.waitKey(10)
+    key = cv2.waitKey(5)
     if key == 113:
         cv2.destroyAllWindows()
         break
