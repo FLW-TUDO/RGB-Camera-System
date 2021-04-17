@@ -11,3 +11,12 @@ if __name__ == "__main__":
         print('Started Camera {}'.format(cam_id))
 
     processor = Processor(cameras)
+    processor.start()
+    
+    while running:
+        command = input('Enter q to shut down...\n')
+    
+        if command == 'q':
+            running = False
+            for camera in cameras:
+                camera.close()
