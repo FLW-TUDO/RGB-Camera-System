@@ -9,7 +9,7 @@ origin_distance = 52.14
 a = 7
 b = 5
 subpix_criteria = (cv2.TERM_CRITERIA_EPS+cv2.TERM_CRITERIA_MAX_ITER, 100, 1e-6)
-axis = np.array([[260, 0, 0], [0, -260, 0], [0, 0, 260]],
+axis = np.array([[130, 0, 0], [0, 130, 0], [0, 0, 130]],
                 dtype=np.float32).reshape(-1, 3)
 
 
@@ -21,22 +21,23 @@ D = np.array([[0.22847352],
               [0.70298454],
               [-0.04718649]])
 
+objp = np.zeros((a*b, 3), np.float32)
+objp[:, :2] = np.mgrid[0:a, 0:b].T.reshape(-1, 2)
+
 
 def create_points(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # Find the chess board corners
     ret, corners = cv2.findChessboardCorners(
-        gray, (a, b), cv2.CALIB_CB_ADAPTIVE_THRESH+cv2.CALIB_CB_FAST_CHECK+cv2.CALIB_CB_NORMALIZE_IMAGE)
+        gray, (a, b), flags=cv2.CALIB_CB_ADAPTIVE_THRESH+cv2.CALIB_CB_FAST_CHECK+cv2.CALIB_CB_NORMALIZE_IMAGE)
     # If found, add object points, image points (after refining them)
     if ret == True:
         corners = cv2.cornerSubPix(
-            gray, corners, (3, 3), (-1, -1), subpix_criteria)
+            gray, corners, (11, 11), (-1, -1), subpix_criteria)
         img = cv2.drawChessboardCorners(img, (a, b), corners, ret)
-        cv2.imshow('img', img)
-        cv2.waitKey(0)
 
-        return corners
+        return corners, objp
 
 
 def calibrate(object_points, image_points):
@@ -73,32 +74,23 @@ def undistort(img):
 if __name__ == "__main__":
     with open('./images/chessboard/data.json') as f:
         data = json.load(f)
-    for fName in glob('./images/chessboard/*.png'):
+
+    for fName in glob('./images/chessboard/*.jpg'):
         image = cv2.imread(fName)
-        image = cv2.resize(image, (int(2592/2), int(2048/2)))
 
-        cv2.imshow('Camera', image)
-        key = cv2.waitKey(0)
-        image_point = create_points(image)
-        object_point = np.array(data[fName.split('/')[-1]])
-        object_point = np.array([
-            [point - object_point[0] for point in object_point]])
-
-        print(object_point)
+        image_point, object_point = create_points(image)
+        # cv2.imshow('Camera', img)
+        # key = cv2.waitKey(0)
+        # if key == 113:
+        #     continue
 
         rvecs, tvecs = calibrate(object_point, image_point)
 
         imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, K, D)
+        print(imgpts)
         image = draw(image, image_point, imgpts)
         cv2.imshow('img', image)
         key = cv2.waitKey(0)
 
-        rotM = cv2.Rodrigues(rvecs)[0]
-        cameraPosition = -np.matrix(rotM).T * np.matrix(tvecs)
-
-        print('Camera Position')
-        print(cameraPosition)
-
         if key == 113:
             cv2.destroyAllWindows()
-            break

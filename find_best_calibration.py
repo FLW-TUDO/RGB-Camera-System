@@ -1,5 +1,6 @@
 from glob import glob
 import itertools
+import sys
 import numpy as np
 import copy
 import os
@@ -13,10 +14,10 @@ calibration_flags = cv2.fisheye.CALIB_RECOMPUTE_EXTRINSIC + \
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.00001)
 
 
-a = 5   # columns
-b = 3   # rows
-objp = np.zeros((1, a*b, 3), np.float32)
-objp[0, :, :2] = np.mgrid[0:a, 0:b].T.reshape(-1, 2)
+a = 7   # columns
+b = 5   # rows
+objp = np.zeros((a*b, 3), np.float32)
+objp[:, :2] = np.mgrid[0:a, 0:b].T.reshape(-1, 2)
 
 
 def create_points(images):
@@ -114,7 +115,7 @@ if __name__ == "__main__":
     max_perm_length = 7
     top_length = 20
 
-    images = glob('./images/*.jpg')
+    images = glob('./images/intrinsics/*.png')
     objpoints, imgpoints, _img_shape = create_points(images)
     perm_range = list(range(len(objpoints)))
     permutations = create_permutations(perm_range, initial_perm_length)
@@ -124,7 +125,10 @@ if __name__ == "__main__":
     top = [(10., [])]
 
     # create initial results with only initial_perm_length images each time
-    for permutation in permutations:
+    for index, permutation in enumerate(permutations):
+        sys.stdout.write(
+            f'\rProgress: {round(index / len(permutations) * 100, 2)}%')
+        sys.stdout.flush()
         new_objpoints = [objpoints[index] for index in permutation]
         new_imgpoints = [imgpoints[index] for index in permutation]
         try:
@@ -133,6 +137,7 @@ if __name__ == "__main__":
 
             update(top, rms, permutation, top_length)
         except cv2.error:
+            print(permutation)
             print('Skipped error.')
             continue
 
@@ -176,3 +181,6 @@ if __name__ == "__main__":
 
     K, D, _ = calculate_intrinsics(new_objpoints, new_imgpoints, _img_shape)
     display_undistored(images[0], K, D)
+
+    print(f'K: {K}')
+    print(f'D: {D}')
