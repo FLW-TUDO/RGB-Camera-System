@@ -46,11 +46,27 @@ class ObjectTracker():
         except:
             print("MarkerPositions: Name not found in subjects")
 
-    # retrieves the position of a given obejct
-    def aquire_Object(self, object_name=''):
+    # retrieves the translation of a given obejct
+    def aquire_Object_Trans(self, object_name=''):
         self.aquire_Frame()
         try:
             return list(self.client.translation(object_name))
+        except:
+            print("AquireObject: Name not found in subjects")
+
+    # retrieves the rotation (quaternion) of a given obejct in the form X,Y,Z,W
+    def aquire_Object_RotQuaternion(self, object_name=''):
+        self.aquire_Frame()
+        try:
+            return list(self.client.rotation_quaternion(object_name))
+        except:
+            print("AquireObject: Name not found in subjects")
+
+    # retrieves the rotation (Euler) of a given obejct
+    def aquire_Object_RotEuler(self, object_name=''):
+        self.aquire_Frame()
+        try:
+            return list(self.client.rotation_euler(object_name))
         except:
             print("AquireObject: Name not found in subjects")
 
