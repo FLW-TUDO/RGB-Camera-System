@@ -57,7 +57,7 @@ class Camera(Thread):
         image = cv2.flip(image, 0)
         image = cv2.flip(image, 1)
 
-        np.savez(os.path.join(
-            'images', f'camera_{self.id}', f'image_{index}.npz'), image)
+        np.save(os.path.join(
+            'images', f'camera_{self.id}', f'image_{index}.npy'), image)
 
         return True
