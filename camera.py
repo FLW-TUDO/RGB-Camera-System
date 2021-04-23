@@ -2,6 +2,8 @@ from threading import Thread
 import os
 import cvb
 from time import time
+import cv2
+import numpy as np
 
 # Camera class for accessing the cvb cameras
 
@@ -48,3 +50,14 @@ class Camera(Thread):
 
     def getImage(self):
         return self.image
+
+    def saveImage(self, index):
+        image = cv2.cvtColor(self.image, cv2.COLOR_RGB2BGR)
+        image = cv2.resize(image, self.resolution)
+        image = cv2.flip(image, 0)
+        image = cv2.flip(image, 1)
+
+        np.savez(os.path.join(
+            'images', f'camera_{self.id}', f'image_{index}.npz'), image)
+
+        return True
