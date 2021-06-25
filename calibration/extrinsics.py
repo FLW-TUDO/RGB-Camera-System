@@ -14,13 +14,13 @@ b = 5
 #                  [0.70298454],
 #                  [-0.04718649]])
 
-mtx = np.array([[1.74524849e+03, 0.00000000e+00, 1.28935422e+03],
-                [0.00000000e+00, 1.73458300e+03, 1.07162350e+03],
-                [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
-dist = np.array([[0.15368548],
-                 [0.22650434],
-                 [-0.44463376],
-                 [0.59037117]])
+mtx = np.array([[857.77408004,   0.,         660.74539569],
+                [0.,         857.76365601, 507.87194174],
+                [0.,           0.,           1.]])
+dist = np.array([[0.16106916],
+                 [0.10749546],
+                 [-0.09645183],
+                 [0.39021927]])
 
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 objp = np.zeros((a*b, 3), np.float32)
@@ -84,7 +84,7 @@ def crop(img, center, width, height):
     return img[y_upper:y_lower, x_left:x_right]
 
 
-for fname in glob.glob('./images/extrinsic/*.png'):
+for fname in glob.glob('./images/snapper/*.png'):
     img = cv2.imread(fname)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     ret, corners = cv2.findChessboardCorners(gray, (a, b), None)
@@ -92,6 +92,9 @@ for fname in glob.glob('./images/extrinsic/*.png'):
     if ret == True:
         corners2 = cv2.cornerSubPix(
             gray, corners, (11, 11), (-1, -1), criteria)
+        cv2.drawChessboardCorners(img, (a, b), corners2, ret)
+        cv2.imshow('img', img)
+        cv2.waitKey(0)
 
         # Find the rotation and translation vectors.
         # ret, rvecs, tvecs, inliers = cv2.solvePnPRansac(
@@ -113,8 +116,8 @@ for fname in glob.glob('./images/extrinsic/*.png'):
         imgpts_cube, jac_cube = cv2.projectPoints(
             axis_cube, rvecs, tvecs, mtx, dist)
 
-        img = drawLine(img, corners2, imgpts_line, 10)
-        # img = drawCube(image, corners2, imgpts_cube, 8)
+        # img = drawLine(img, corners2, imgpts_line, 10)
+        img = drawCube(img, corners2, imgpts_cube, 8)
         img = undistort(img)
         # img = crop(img, corners2[0][0], int(2592/2), int(2048/2))
         img = cv2.resize(img, (int(2592/2), int(2048/2)))

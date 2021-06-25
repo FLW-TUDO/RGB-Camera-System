@@ -3,7 +3,7 @@ import cv2
 from glob import glob
 import sys
 from vicon_tracker import ObjectTracker
-from calculate_chessboard import getChessboardPoints
+from calibration import getChessboardPoints
 import json
 
 # simple tool to get single images from the camera feed
@@ -36,7 +36,7 @@ else:
     index = 0
 
 positions = {}
-cam = Camera(3)
+cam = Camera(6)
 
 
 while True:

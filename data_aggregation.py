@@ -71,7 +71,7 @@ class Processor():
         while self.running:
             time_start = time()
             for camera in cameras:
-                res = self.getImage(camera, image_index)
+                _ = self.getImage(camera, image_index)
 
             self.aquire_object_positions(image_index)
             image_index += 1

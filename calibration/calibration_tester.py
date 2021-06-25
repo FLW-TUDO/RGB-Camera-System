@@ -7,7 +7,7 @@ assert cv2.__version__[
 # static calibration script for camera calibration from recorded images
 
 # parameters
-images = images = glob('./images/chessboard/*.jpg')
+images = glob('./images/snapper/*.png')
 CHECKERBOARD = (7, 5)
 
 subpix_criteria = (cv2.TERM_CRITERIA_EPS+cv2.TERM_CRITERIA_MAX_ITER, 30, 0.1)
@@ -23,6 +23,8 @@ def create_points(images):
 
     objpoints = []  # 3d point in real world space
     imgpoints = []  # 2d points in image plane.
+
+    gray = np.array([])
 
     for fname in images:
         img = cv2.imread(fname)
@@ -92,4 +94,6 @@ if __name__ == "__main__":
     objpoints, imgpoints, _img_shape = create_points(images)
     K, D, rvecs, tvecs, N_OK = calculate_intrinsics(
         objpoints, imgpoints, _img_shape)
-    display_undistored(images[0], K, D)
+
+    for image in images:
+        display_undistored(image, K, D)

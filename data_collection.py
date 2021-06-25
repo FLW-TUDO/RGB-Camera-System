@@ -5,7 +5,7 @@ import os
 import cv2
 from pyquaternion import Quaternion
 
-objects_ids = {"KLT_15_neu": 0}
+objects_ids = {"AS_1_neu": 0}
 index = 0
 
 
@@ -92,7 +92,8 @@ with open("data.csv") as f:
         obj_to_world_rot_quat = string_to_numpy(row[3])
 
         for camID in range(8):
-            fileName = os.path.join("images", f"camera_{camID}", f"{row[1]}.npy")
+            fileName = os.path.join(
+                "images", f"camera_{camID}", f"{row[1]}.npy")
             if not os.path.isfile(fileName):
                 print(f"Not image found for camera {camID}")
                 continue

@@ -86,11 +86,13 @@ class ObjectTracker():
 
 
 if __name__ == "__main__":
-    object_name = 'chessboard'
+    object_name = 'aruco_4'
 
     ob = ObjectTracker()
 
     ob.connect()
+    ob.aquire_Frame()
+    print(ob.subjects)
     print(ob.aquire_Object_Marker(object_name))
     print(ob.aquire_Object_MarkerPositions(object_name))
 

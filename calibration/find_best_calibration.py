@@ -3,7 +3,7 @@ import itertools
 import sys
 import numpy as np
 import copy
-import os
+import warnings
 import cv2
 assert cv2.__version__[
     0] >= '3', 'The fisheye module requires opencv version >= 3.0.0'
@@ -115,7 +115,7 @@ if __name__ == "__main__":
     max_perm_length = 7
     top_length = 20
 
-    images = glob('./images/intrinsics/*.png')
+    images = glob('./images/snapper/*.png')
     objpoints, imgpoints, _img_shape = create_points(images)
     perm_range = list(range(len(objpoints)))
     permutations = create_permutations(perm_range, initial_perm_length)
@@ -148,7 +148,7 @@ if __name__ == "__main__":
         new_top = [(10., [])]
         for i in range(len(objpoints)):
             for val, perm in top:
-                if i not in perm:
+                if i not in perm and type(perm) != list:
                     new_perm = perm + (i,)
                     new_objpoints = [objpoints[index] for index in new_perm]
                     new_imgpoints = [imgpoints[index] for index in new_perm]

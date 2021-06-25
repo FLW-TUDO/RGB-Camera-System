@@ -63,7 +63,7 @@ def charuco(gray):
 
 # simple script to delete not usable images
 if __name__ == "__main__":
-    images = glob('./images/intrinsics/*.png')
+    images = glob('./images/snapper/*.png')
     # images = glob('./images/charuco/*.jpg')
 
     for fname in images:

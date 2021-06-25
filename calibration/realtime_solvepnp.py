@@ -1,19 +1,33 @@
 from camera import Camera
 import cv2
 import numpy as np
-import sys
 
 scale = 130
 a = 7
 b = 5
 
-mtx = np.array([[1.75389232e+03, 0.00000000e+00, 1.33467897e+03],
-                [0.00000000e+00, 1.76310192e+03, 9.90189589e+02],
-                [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
-dist = np.array([[0.1661366],
-                 [-0.11660577],
-                 [0.96362021],
-                 [-0.95954771], ])
+# mtx = np.array([[1.75389232e+03, 0.00000000e+00, 1.33467897e+03],
+#                 [0.00000000e+00, 1.76310192e+03, 9.90189589e+02],
+#                 [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
+# mtx = np.array([[856.96377093,   0.,         656.22791871],
+#                 [0.,         856.9239457,  506.29416576],
+#                 [0.,          0.,           1.]])
+mtx = np.array([[857.77408004,   0.,         660.74539569],
+                [0.,         857.76365601, 507.87194174],
+                [0.,           0.,           1.]])
+# dist = np.array([[0.1661366],
+#                  [-0.11660577],
+#                  [0.96362021],
+#                  [-0.95954771], ])
+# dist = np.array([[-1.75785099e-01],
+#                  [1.25234579e-01],
+#                  [- 9.30736485e-05],
+#                  [- 9.18463510e-04],
+#                  [- 2.64115332e-02]])
+dist = np.array([[0.16106916],
+                 [0.10749546],
+                 [-0.09645183],
+                 [0.39021927]])
 
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
@@ -141,20 +155,20 @@ while True:
         imgpts_cube, jac_cube = cv2.projectPoints(
             axis_cube, rvecs, tvecs, mtx, dist)
 
-        if not valid_point(imgpts_line, corners2, (2592, 2048)) or not valid_point(imgpts_cube, corners2, (2592, 2048)):
-            continue
-        else:
-            img = drawLine(image, corners2, imgpts_line, 10)
-            # img = drawCube(image, corners2, imgpts_cube, 8)
-            img = undistort(img)
-            img = crop(img, corners2[0][0], int(2592/2), int(2048/2))
-            cv2.imshow('Camera', img)
-            key = cv2.waitKey(30) & 0xff
-            if key == 113:
-                cv2.destroyAllWindows()
-                break
+        # if not valid_point(imgpts_line, corners2, (2592, 2048)) or not valid_point(imgpts_cube, corners2, (2592, 2048)):
+        #     continue
+        # else:
+        img = drawLine(image, corners2, imgpts_line, 10)
+        # img = drawCube(image, corners2, imgpts_cube, 8)
+        img = undistort(img)
+        img = crop(img, corners2[0][0], int(2592/2), int(2048/2))
+        cv2.imshow('Camera', img)
+        key = cv2.waitKey(30) & 0xff
+        if key == 113:
+            cv2.destroyAllWindows()
+            break
 
-            print(f'Translation:\n {tvecs}')
+        print(f'Translation:\n {tvecs}')
     else:
         img = undistort(img)
         img = cv2.resize(img, (int(2592/2), int(2048/2)))
