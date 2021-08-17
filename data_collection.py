@@ -5,7 +5,7 @@ import os
 import cv2
 from pyquaternion import Quaternion
 
-objects_ids = {"AS_1_neu": 0}
+objects_ids = {"KLT_35_neu": 1}
 index = 0
 
 

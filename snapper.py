@@ -36,7 +36,7 @@ else:
     index = 0
 
 positions = {}
-cam = Camera(6)
+cam = Camera(2)
 
 
 while True:
@@ -50,10 +50,10 @@ while True:
 
     cv2.imshow('Camera', image)
     key = cv2.waitKey(5)
-    if key == 113:
+    if key == 113:  # q
         cv2.destroyAllWindows()
         break
-    if key == 32:
+    if key == 32:  # space
         if len(freenumbers) > 0:
             index = freenumbers.pop(0)
         else:
@@ -62,6 +62,7 @@ while True:
         sys.stdout.flush()
 
         filename = './images/{}/{}.png'.format(folder, index)
+
         cv2.imwrite(filename, image)
         # 2 ---- 3
         # | \
