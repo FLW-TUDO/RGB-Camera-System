@@ -4,6 +4,7 @@ import glob
 
 a = 7
 b = 5
+
 # termination criteria
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
@@ -13,6 +14,14 @@ objp[:, :2] = np.mgrid[0:a, 0:b].T.reshape(-1, 2)
 objpoints = []  # 3d point in real world space
 imgpoints = []  # 2d points in image plane.
 images = glob.glob('./images/snapper/*.png')
+
+
+objp = np.zeros((1, a*b, 3), np.float32)
+objp[0, :, :2] = np.mgrid[0:a,
+                          0:b].T.reshape(-1, 2)
+
+
+print('Calculating...')
 for fname in images:
     img = cv.imread(fname)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -27,10 +36,12 @@ for fname in images:
         # cv.drawChessboardCorners(img, (a, b), corners2, ret)
         # cv.imshow('img', img)
         # cv.waitKey(250)
+# objpoints = np.expand_dims(objpoints, 1)
 cv.destroyAllWindows()
 
 ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(
     objpoints, imgpoints, gray.shape[::-1], None, None)
+
 
 print(mtx)
 print(dist)
@@ -38,6 +49,7 @@ print(dist)
 
 # for fname in images:
 #     img = cv.imread(fname)
+#     img = cv.resize(img, (int(2592 / 2), int(2048 / 2)))
 #     h,  w = img.shape[:2]
 #     newcameramtx, roi = cv.getOptimalNewCameraMatrix(
 #         mtx, dist, (w, h), 1, (w, h))
@@ -48,5 +60,8 @@ print(dist)
 #     x, y, w, h = roi
 #     dst = dst[y:y+h, x:x+w]
 #     cv.imshow('img', dst)
-#     cv.waitKey(0)
+#     key = cv.waitKey(0)
+#     if key == 113:  # q
+#         cv.destroyAllWindows()
+#         break
 # cv.destroyAllWindows()
