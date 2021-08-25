@@ -1,14 +1,24 @@
-from _typeshed import NoneType
 from camera import Camera
 from vicon_tracker import ObjectTracker
 import numpy as np
 import cv2
+
+# Snap images and retrieve the object (magic wand) and image coordinates
 
 cam_id = 2
 wand_name = "MagicWand"
 
 
 def extractCalibrationPattern(image, mask=None):
+    """Extracts the magic wand pattern from an image
+
+    Args:
+        image (numpy.array): input image
+        mask (numpy.array, optional): Optional mask to reduce noise and information. Defaults to None.
+
+    Returns:
+        boolean, numpy.array: success, position of the magic wand markers
+    """
     kernel = np.ones((3, 3), np.uint8)
     centroids_update = np.zeros((5, 2), dtype=np.uint8)
 
@@ -29,6 +39,16 @@ def extractCalibrationPattern(image, mask=None):
 
 
 def findCalibrationPattern(stats, centroids, number_of_calibrationpoints):
+    """Finds the positions of the magic wand markers
+
+    Args:
+        stats (numpy.array): OpenCv component stats
+        centroids (numpy.array): possible marker positions
+        number_of_calibrationpoints (number): number of calibration points to look for
+
+    Returns:
+        numpy.array: correctly sorted marker positions
+    """
     ret = False
     if np.shape(centroids)[0] > number_of_calibrationpoints:
         ret = True
@@ -141,12 +161,25 @@ def findCalibrationPattern(stats, centroids, number_of_calibrationpoints):
 
 
 def calcAreaTriangle(p1, p2, p3):
+    """Helper function to calculate the area of a triangle between three points
+
+    Args:
+        p1 (numpy.array): first point of the triangle
+        p2 (numpy.array): second point of the triangle
+        p3 (numpy.array): third point of the triangle
+
+    Returns:
+        number: area size of the triangle
+    """
     return 0.5 * abs(
         (p2[0] - p1[0]) * (p3[1] - p2[1]) - (p3[0] - p2[0]) * (p2[1] - p1[1])
     )
 
 
-if __name__ == "__main__":
+def main():
+    """Main function
+    creates the camera object and runs the image capturing
+    """
     cam = Camera(cam_id)
     tracker = ObjectTracker()
     tracker.connect()
@@ -174,3 +207,7 @@ if __name__ == "__main__":
 
     print(f"Image points {image_points}")
     print(f"Object points {object_points}")
+
+
+if __name__ == "__main__":
+    main()
