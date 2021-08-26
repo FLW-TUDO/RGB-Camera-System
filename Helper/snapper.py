@@ -3,8 +3,6 @@ import cv2
 from glob import glob
 import sys
 from vicon_tracker import ObjectTracker
-from calibration import getChessboardPoints
-import json
 
 # simple tool to get single images from the camera feed
 # used for debugging purposes
