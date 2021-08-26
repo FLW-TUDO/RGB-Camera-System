@@ -130,5 +130,6 @@ dmypy.json
 
 # Project specific
 images/
+doc_imgs/
 *.npy
 *.csv
