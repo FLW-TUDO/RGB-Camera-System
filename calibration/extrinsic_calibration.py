@@ -6,23 +6,28 @@ import json
 
 objectname = 'checkerboard'
 origin_distance = 52.14
+scale = 130
 a = 7
 b = 5
 subpix_criteria = (cv2.TERM_CRITERIA_EPS+cv2.TERM_CRITERIA_MAX_ITER, 100, 1e-6)
-axis = np.array([[130, 0, 0], [0, 130, 0], [0, 0, 130]],
-                dtype=np.float32).reshape(-1, 3)
 
+# K = np.array([[444.01212317, 0., 317.87966175],
+#               [0., 442.20562833, 264.72142874],
+#               [0., 0., 1.]])
+# D = np.array([[0.22847352],
+#               [-0.22746739],
+#               [0.70298454],
+#               [-0.04718649]])
 
-K = np.array([[444.01212317, 0., 317.87966175],
-              [0., 442.20562833, 264.72142874],
-              [0., 0., 1.]])
-D = np.array([[0.22847352],
-              [-0.22746739],
-              [0.70298454],
-              [-0.04718649]])
+K = np.array([[864.97264262,   0.0,         633.44876394],
+              [0.0,         864.93841842, 522.59039761],
+              [0.0,          0.0,           1.0, ]])
+D = np.array(
+    [[-0.17183669,  0.13335938,  0.00132646,  0.00052755]])
 
 objp = np.zeros((a*b, 3), np.float32)
 objp[:, :2] = np.mgrid[0:a, 0:b].T.reshape(-1, 2)
+objp *= scale
 
 
 def create_points(img):
@@ -71,26 +76,53 @@ def undistort(img):
     return undistorted_img
 
 
+def draw_cube(img, corners, imgpts, line_width=3):
+    imgpts = np.int32(imgpts).reshape(-1, 2)
+    # draw ground floor in green
+    img = cv2.drawContours(img, [imgpts[:4]], -1, (0, 255, 0), -line_width)
+    # draw pillars in blue color
+    for i, j in zip(range(4), range(4, 8)):
+        img = cv2.line(img, tuple(imgpts[i]), tuple(
+            imgpts[j]), (255), line_width)
+    # draw top layer in red color
+    img = cv2.drawContours(img, [imgpts[4:]], -1, (0, 0, 255), line_width)
+
+    return img
+
+
+def axis_select(input, scale):
+    if input == 'cube':
+        axis = np.float32([[0, 0, 0], [0, scale, 0], [scale, scale, 0], [scale, 0, 0],
+                           [0, 0, -scale], [0, scale, -scale], [scale, scale, -scale], [scale, 0, -scale]])
+    elif input == 'line':
+        axis = np.array([[scale, 0, 0], [0, scale, 0], [0, 0, scale]],
+                        dtype=np.float32).reshape(-1, 3)
+    return axis
+
+
 if __name__ == "__main__":
-    with open('./images/chessboard/data.json') as f:
-        data = json.load(f)
+    # with open('./images/chessboard/data.json') as f:
+    #     data = json.load(f)
 
-    for fName in glob('./images/chessboard/*.jpg'):
+    for i, fName in enumerate(glob('./images/snapper/*.png')):
         image = cv2.imread(fName)
-
-        image_point, object_point = create_points(image)
+        print(i)
+        image_points, object_points = create_points(image)
         # cv2.imshow('Camera', img)
         # key = cv2.waitKey(0)
         # if key == 113:
         #     continue
+        # TODO: use obtained tvecs & rvecs from calibrateCamera()
+        rvecs, tvecs = calibrate(object_points, image_points)
 
-        rvecs, tvecs = calibrate(object_point, image_point)
-
-        imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, K, D)
-        print(imgpts)
-        image = draw(image, image_point, imgpts)
+        axis = axis_select('cube', 520)
+        projected_points, jac = cv2.projectPoints(axis, rvecs, tvecs, K, D)
+        # image = draw(image, image_points, projected_points)
+        image = draw_cube(image, image_points, projected_points)
         cv2.imshow('img', image)
         key = cv2.waitKey(0)
 
-        if key == 113:
+        if key == 113:  # q
             cv2.destroyAllWindows()
+            break
+        cv2.destroyAllWindows()

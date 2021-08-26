@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 import numpy as np
 import cv2 as cv
 import glob
@@ -41,27 +42,40 @@ cv.destroyAllWindows()
 
 ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(
     objpoints, imgpoints, gray.shape[::-1], None, None)
+# retval, mtx, dist, rvec, tvecs, stdDevInt, stdDevExt, perViewErrors = cv.calibrateCameraExtended(
+#     objpoints, imgpoints, gray.shape[::-1], None, None)
 
 
 print(mtx)
 print(dist)
+print(tvecs)
 
 
-# for fname in images:
-#     img = cv.imread(fname)
-#     img = cv.resize(img, (int(2592 / 2), int(2048 / 2)))
-#     h,  w = img.shape[:2]
-#     newcameramtx, roi = cv.getOptimalNewCameraMatrix(
-#         mtx, dist, (w, h), 1, (w, h))
+for fname in images:
+    img = cv.imread(fname)
+    img = cv.resize(img, (int(2592 / 2), int(2048 / 2)))
+    h,  w = img.shape[:2]
+    newcameramtx, roi = cv.getOptimalNewCameraMatrix(
+        mtx, dist, (w, h), 1, (w, h))
 
-#     # undistort
-#     dst = cv.undistort(img, mtx, dist, None, newcameramtx)
-#     # crop the image
-#     x, y, w, h = roi
-#     dst = dst[y:y+h, x:x+w]
-#     cv.imshow('img', dst)
-#     key = cv.waitKey(0)
-#     if key == 113:  # q
-#         cv.destroyAllWindows()
-#         break
-# cv.destroyAllWindows()
+    # undistort
+    dst = cv.undistort(img, mtx, dist, None, newcameramtx)
+    # crop the image
+    x, y, w, h = roi
+    dst = dst[y:y+h, x:x+w]
+    cv.imshow('img', dst)
+    key = cv.waitKey(0)
+    if key == 113:  # q
+        cv.destroyAllWindows()
+        break
+    cv.destroyAllWindows()
+
+
+# reprojection error
+mean_error = 0
+for i in range(len(objpoints)):
+    imgpoints2, _ = cv.projectPoints(
+        objpoints[i], rvecs[i], tvecs[i], mtx, dist)
+    error = cv.norm(imgpoints[i], imgpoints2, cv.NORM_L2)/len(imgpoints2)
+    mean_error += error
+print("total error: {}".format(mean_error/len(objpoints)))

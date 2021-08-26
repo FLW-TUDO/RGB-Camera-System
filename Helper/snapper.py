@@ -10,7 +10,7 @@ from vicon_tracker import ObjectTracker
 folder = "snapper"
 
 tracker = ObjectTracker()
-cam = Camera(6)
+cam = Camera(0)
 
 
 def get_index():
@@ -40,8 +40,8 @@ def processImage(image):
     Returns:
         numpy.array: processed image
     """
-    image = cv2.flip(image, 0)
-    image = cv2.flip(image, 1)
+    # image = cv2.flip(image, 0)
+    # image = cv2.flip(image, 1)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image = cv2.resize(image, (int(2592 / 2), int(2048 / 2)))
     return image
