@@ -3,6 +3,7 @@ import cv2
 from glob import glob
 import sys
 from vicon_tracker import ObjectTracker
+import csv
 
 # simple tool to get single images from the camera feed
 # used for debugging purposes
@@ -10,7 +11,7 @@ from vicon_tracker import ObjectTracker
 folder = "snapper"
 
 tracker = ObjectTracker()
-cam = Camera(0)
+cam = Camera(2)
 
 
 def get_index():
@@ -55,26 +56,35 @@ def main():
     tracker.connect()
     index = get_index()
 
-    while True:
-        image = cam.getImage()
-        if image is None:
-            continue
+    with open("vicon_pose_chessboard.csv", "a") as f:
+        writer = csv.writer(f)
+        while True:
+            image = cam.getImage()
+            if image is None:
+                continue
 
-        image = processImage(image)
+            image = processImage(image)
 
-        cv2.imshow("Camera", image)
-        key = cv2.waitKey(5)
-        if key == 113:
-            cv2.destroyAllWindows()
-            break
-        if key == 32:
-            index += 1
-            sys.stdout.write("\rPicture taken: {}".format(index))
-            sys.stdout.flush()
+            cv2.imshow("Camera", image)
+            key = cv2.waitKey(5)
+            if key == 113:
+                cv2.destroyAllWindows()
+                break
+            if key == 32:
+                index += 1
+                sys.stdout.write("\rPicture taken: {}".format(index))
+                sys.stdout.flush()
 
-            filename = "./images/{}/{}.png".format(folder, index)
-            cv2.imwrite(filename, image)
+                filename = "./images/{}/{}.png".format(folder, index)
+                cv2.imwrite(filename, image)
 
+                vicon_translation = tracker.aquire_Object_Trans('chessboard')
+                vicon_rotation = tracker.aquire_Object_RotQuaternion(
+                    'chessboard')
+
+                writer.writerow(
+                    [f"img_{index}", vicon_translation, vicon_rotation]
+                )
     cam.close()
 
 
