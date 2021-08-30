@@ -115,7 +115,8 @@ if __name__ == "__main__":
         # TODO: use obtained tvecs & rvecs from calibrateCamera()
         rvecs, tvecs = calibrate(object_points, image_points)
 
-        axis = axis_select('cube', 520)
+        scale = 520
+        axis = axis_select('cube', scale)
         projected_points, jac = cv2.projectPoints(axis, rvecs, tvecs, K, D)
         # image = draw(image, image_points, projected_points)
         image = draw_cube(image, image_points, projected_points)

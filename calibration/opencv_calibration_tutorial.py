@@ -5,6 +5,7 @@ import glob
 
 a = 7
 b = 5
+scale = 130
 
 # termination criteria
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -21,6 +22,7 @@ objp = np.zeros((1, a*b, 3), np.float32)
 objp[0, :, :2] = np.mgrid[0:a,
                           0:b].T.reshape(-1, 2)
 
+objp *= scale
 
 print('Calculating...')
 for fname in images:
@@ -57,6 +59,7 @@ for fname in images:
     h,  w = img.shape[:2]
     newcameramtx, roi = cv.getOptimalNewCameraMatrix(
         mtx, dist, (w, h), 1, (w, h))
+    print(newcameramtx)
 
     # undistort
     dst = cv.undistort(img, mtx, dist, None, newcameramtx)
