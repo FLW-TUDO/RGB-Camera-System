@@ -11,6 +11,7 @@ import csv
 folder = "snapper"
 
 tracker = ObjectTracker()
+object_name = 'chessboard'
 cam = Camera(2)
 
 
@@ -29,7 +30,7 @@ def get_index():
         except:
             pass
 
-    return numbers[-1] if numbers != [] else 0
+    return max(numbers) if numbers != [] else 0
 
 
 def processImage(image):
@@ -78,13 +79,15 @@ def main():
                 filename = "./images/{}/{}.png".format(folder, index)
                 cv2.imwrite(filename, image)
 
-                vicon_translation = tracker.aquire_Object_Trans('chessboard')
-                vicon_rotation = tracker.aquire_Object_RotQuaternion(
-                    'chessboard')
+                if object_name in tracker.aquire_subjects():
+                    vicon_translation = tracker.aquire_Object_Trans(
+                        object_name)
+                    vicon_rotation = tracker.aquire_Object_RotQuaternion(
+                        object_name)
 
-                writer.writerow(
-                    [f"img_{index}", vicon_translation, vicon_rotation]
-                )
+                    writer.writerow(
+                        [f"img_{index}", vicon_translation, vicon_rotation])
+
     cam.close()
 
 
