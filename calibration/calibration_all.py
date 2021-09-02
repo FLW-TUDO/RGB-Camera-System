@@ -36,13 +36,13 @@ def get_intrinsics(imgs_path, a, b, scale, visulaize):
     return ret, mtx, dist, newcameramtx, roi, rvecs, tvecs
 
 
-def get_extrinsics(imgs_path, a, b, scale):
-    images = glob.glob(imgs_path)
+def get_extrinsics(img, a, b, scale, mtx, dist):
+    # images = glob.glob(imgs_path)
     objp = initialize_obj_points(a, b, scale)
-    for fName in images:
-        img = cv2.imread(fName)
-        ret, corners2, gray = create_img_points(img, a, b)
-        ret, rvecs, tvecs = cv2.solvePnP(objp, corners2, mtx, dist)
+    # for fName in images:
+    img = cv2.imread(img)
+    ret, corners2, gray = create_img_points(img, a, b)
+    ret, rvecs, tvecs = cv2.solvePnP(objp, corners2, mtx, dist)
     if ret:
         return ret, rvecs, tvecs
     else:
@@ -138,7 +138,8 @@ if __name__ == "__main__":
         imgs_path, a, b, scale, visulaize=True)
     ic(mtx)
     ic(newcameramtx)
-    ret, rvecs, tvecs = get_extrinsics(imgs_path, a, b, scale)
+    ic(dist)
+    ret, rvecs, tvecs = get_extrinsics(imgs_path, a, b, scale, mtx, dist)
     ic(tvecs)
     ic(rvecs)
     undistorted_img = undistort(
