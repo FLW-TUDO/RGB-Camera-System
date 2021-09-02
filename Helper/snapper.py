@@ -59,6 +59,7 @@ def main():
 
     with open("vicon_pose_chessboard.csv", "a") as f:
         writer = csv.writer(f)
+        writer.writerow(['image', 'translation', 'rotation'])
         while True:
             image = cam.getImage()
             if image is None:

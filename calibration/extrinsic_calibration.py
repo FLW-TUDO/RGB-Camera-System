@@ -116,10 +116,10 @@ if __name__ == "__main__":
         rvecs, tvecs = calibrate(object_points, image_points)
 
         scale = 520
-        axis = axis_select('cube', scale)
+        axis = axis_select('line', scale)
         projected_points, jac = cv2.projectPoints(axis, rvecs, tvecs, K, D)
-        # image = draw(image, image_points, projected_points)
-        image = draw_cube(image, image_points, projected_points)
+        image = draw(image, image_points, projected_points)
+        # image = draw_cube(image, image_points, projected_points)
         cv2.imshow('img', image)
         key = cv2.waitKey(0)
 
