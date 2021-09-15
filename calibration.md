@@ -20,7 +20,7 @@ mtx = [[864.97264262,   0.0,         633.44876394],
                  [0.0,           0.0,            1.0      ]]
 ```
 
-# Calibration results [01.09.21]:
+# Calibration results [31.09.21]:
 
 ## Notes:
 - 16 images used (filtered with selecter)
@@ -38,3 +38,12 @@ mtx = [[856.64715347,   0.0,         628.00868644],
                  [0.0,           0.0,            1.0      ]]
 ```
 
+# Extrinsic Calibration results [03.09.21]:
+
+## Notes
+- Camera location (ground) from calibration images on 31.09.21
+
+```
+ cam2vicon_trans_avg = [-5330.06, 485.872, 1128.336]
+
+```
