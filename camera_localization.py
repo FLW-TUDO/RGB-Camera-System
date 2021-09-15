@@ -100,6 +100,9 @@ def get_origin_chess2chessboard_transform(scale):
 if __name__ == '__main__':
     images = glob.glob(images)
     cam2vicon_trans_sum = 0
+    # cam2vicon_rot_euler_cos_sum = 0
+    # cam2vicon_rot_euler_sin_sum = 0
+    cam2vicon_rot_euler_sum = 0
     for fName in images:
         chessboard2vicon_transform = get_chessboard2vicon_transform(
             csv_file, fName)
@@ -116,10 +119,23 @@ if __name__ == '__main__':
 
         cam2vicon_trans_sum += cam2vicon_transform[0:3, 3]
 
-        origin_chess2vicon_rot = R.from_matrix(
-            origin_chess2vicon_transform[0:3, 0:3])
-        origin_chess2vicon_rot = R.as_quat(origin_chess2vicon_rot)
+        cam2vicon_rot = R.from_matrix(cam2vicon_transform[0:3, 0:3])
+        cam2vicon_rot_euler = cam2vicon_rot.as_euler('xyz', degrees=False)
+        ic(np.degrees(cam2vicon_rot_euler))
+
+        # cam2vicon_rot_euler_cos_sum += np.cos(cam2vicon_rot_euler)
+        # cam2vicon_rot_euler_sin_sum += np.sin(cam2vicon_rot_euler)
+
+        cam2vicon_rot_euler_sum += cam2vicon_rot_euler
 
     ic(cam2vicon_trans_sum)
     cam2vicon_trans_avg = np.divide(cam2vicon_trans_sum, len(images))
     ic(cam2vicon_trans_avg)
+
+    # cam2vicon_rot_euler_avg = np.degrees(np.arctan(np.divide(
+    #     cam2vicon_rot_euler_sin_sum, len(images)), np.divide(cam2vicon_rot_euler_cos_sum, len(images))))
+    # ic(cam2vicon_rot_euler_avg)
+
+    cam2vicon_rot_euler_avg = np.degrees(
+        np.divide(cam2vicon_rot_euler_sum, len(images)))
+    ic(cam2vicon_rot_euler_avg)
