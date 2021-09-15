@@ -117,5 +117,5 @@ class Processor:
             )
             sys.stdout.flush()
 
-            if cv2.waitKey(100) == ord("q"):
+            if cv2.waitKey(4000) == ord("q"):
                 break

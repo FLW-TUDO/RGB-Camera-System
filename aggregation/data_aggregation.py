@@ -6,7 +6,7 @@ from AggregationProcessor import Processor
 def main():
     # the selected cameras out of [0, 1, 2, 3, 4, 5, 6, 7]
     camera_ids = [0, 1, 2, 3, 4, 5, 6, 7]
-    object_ids = ["KLT_34_neu"]
+    object_ids = ["rb1_base_d"]
 
     processor = Processor(camera_ids, object_ids)
     processor.record()
