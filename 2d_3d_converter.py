@@ -1,35 +1,37 @@
-from camera import Camera
+from numpy.core.defchararray import upper
+from calibration_all import get_intrinsics
 import numpy as np
-import cv2
+from icecream import ic
 
 
-def undistort(img, mtx, dist):
-    _img_shape = img.shape[:2]
-    DIM = _img_shape[::-1]
-    map1, map2 = cv2.fisheye.initUndistortRectifyMap(
-        mtx, dist, np.eye(3), mtx, DIM, cv2.CV_16SC2)
-    undistorted_img = cv2.remap(
-        img, map1, map2, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
-    return undistorted_img
+scale = 130
+a = 7
+b = 5
+imgs_path = './images/snapper/*.png'
+ret, mtx, dist, newcameramtx, roi, _, _ = get_intrinsics(
+    imgs_path, a, b, scale, visulaize=False)
 
 
-if __name__ == '__main__':
-    test_pts_2d = np.array(
-        [[533, 744], [617.5, 495], [456.5, 520], [558, 543]])
+intrisics_inv = np.linalg.inv(newcameramtx)
+ic(intrisics_inv)
 
-    mtx = np.array([[1.83212000e+03, 0.0, 1.30771040e+03],
-                    [0.0, 1.82888459e+03, 1.03749179e+03],
-                    [0.0, 0.0, 1.0]])
-    dist = np.array([[0.00735673],
-                     [1.51828844],
-                     [-4.9074145],
-                     [6.63861832]])
-    tvecs =
-    rvecs =
-    # proj_mat =
-    # proj_mat_mod =
-    # proj_mat_inv =
-    # tvecs_res =
-    # rvecs_res =
-    img = cv2.imread('./detectron_test_img')
-    undistorted_img = undistort(img, mtx, dist)
+test_imgs = './images/detectron_test_img.png'
+upper_left = np.row_stack((np.array([533, 744]).reshape(2, 1), [1.0]))
+ic(upper_left)
+# upper_right = [617.5, 495]
+# lower_left = [456.5, 520]
+# lower_right = [558, 543]
+
+point2cam_transform = intrisics_inv.dot(upper_left)
+
+point2cam_transform = np.row_stack(
+    (point2cam_transform[0:2], 0.0, point2cam_transform[2]))
+ic(point2cam_transform)
+
+cam2vicon_transform = np.array(([0.555, 0.391, 0.733, 0.0], [-0.564, -0.470, 0.678, 0.0], [
+    0.610, -0.790, -0.040, 1200], [0.0, 0.0, 0.0, 1.0]))  # Z axis zeroed out
+ic(cam2vicon_transform)
+
+cam2vicon_transform_inv = np.linalg.inv(cam2vicon_transform)
+point2vicon_transform = cam2vicon_transform_inv.dot(point2cam_transform)
+ic(point2vicon_transform)
