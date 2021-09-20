@@ -11,7 +11,7 @@ def initialize_obj_points(a, b, scale):
     return objp
 
 
-# TODO: checks returned rvecs & tvecs
+# TODO: check returned rvecs & tvecs
 def get_intrinsics(imgs_path, a, b, scale, visulaize):
     images = glob.glob(imgs_path)
     objpoints = []
@@ -43,6 +43,7 @@ def get_extrinsics(img, a, b, scale, mtx, dist):
     img = cv2.imread(img)
     ret, corners2, gray = create_img_points(img, a, b)
     ret, rvecs, tvecs = cv2.solvePnP(objp, corners2, mtx, dist)
+    # rotation given as axis angle
     if ret:
         return ret, rvecs, tvecs
     else:
@@ -50,7 +51,6 @@ def get_extrinsics(img, a, b, scale, mtx, dist):
 
 
 def create_img_points(img, a, b):   # TODO: check flags
-    '''returns concatenated image points and object points'''
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     # Find the chess board corners
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     b = 5
     imgs_path = './images/snapper/*.png'
     ret, mtx, dist, newcameramtx, roi, _, _ = get_intrinsics(
-        imgs_path, a, b, scale, visulaize=True)
+        imgs_path, a, b, scale, visulaize=False)
     ic(mtx)
     ic(newcameramtx)
     ic(dist)
@@ -143,4 +143,4 @@ if __name__ == "__main__":
     ic(tvecs)
     ic(rvecs)
     undistorted_img = undistort(
-        imgs_path, mtx, dist, newcameramtx, roi, visualize=True)
+        imgs_path, mtx, dist, newcameramtx, roi, visualize=False)
