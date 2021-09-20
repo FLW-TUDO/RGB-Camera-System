@@ -20,7 +20,7 @@ mtx = [[864.97264262,   0.0,         633.44876394],
                  [0.0,           0.0,            1.0      ]]
 ```
 
-# Calibration results [31.09.21]:
+# Calibration results [31.08.21]:
 
 ## Notes:
 - 16 images used (filtered with selecter)
