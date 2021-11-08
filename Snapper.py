@@ -1,8 +1,8 @@
-from camera import Camera
+from Camera.CVBCamera import Camera
 import cv2
 from glob import glob
 import sys
-from vicon_tracker import ObjectTracker
+from PyVicon.vicon_tracker import ObjectTracker
 import csv
 
 # simple tool to get single images from the camera feed

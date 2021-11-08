@@ -42,7 +42,8 @@ def get_chessboard2vicon_transform(csv_file, img_path):
                     ic(index)
         row = reader_list[int(index)]
 
-        chessboard2vicon_trans = np.array(ast.literal_eval(row[1]))
+        chessboard2vicon_trans = np.array(
+            ast.literal_eval(row[1]))  # converts string list
         ic(chessboard2vicon_trans)
 
         chessboard2vicon_rot_quat = ast.literal_eval(row[2])

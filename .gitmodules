@@ -1,0 +1,6 @@
+[submodule "PyVicon"]
+	path = PyVicon
+	url = https://github.com/FLW-TUDO/PyVicon.git
+[submodule "Camera"]
+	path = Camera
+	url = https://github.com/FLW-TUDO/Camera.git

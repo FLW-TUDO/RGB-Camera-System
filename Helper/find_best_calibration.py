@@ -3,7 +3,6 @@ import itertools
 import sys
 import numpy as np
 import copy
-import warnings
 import cv2
 assert cv2.__version__[
     0] >= '3', 'The fisheye module requires opencv version >= 3.0.0'
