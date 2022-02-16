@@ -1,3 +1,5 @@
+import os.path
+
 from Camera.CVBCamera import Camera
 import cv2
 from glob import glob
@@ -8,7 +10,9 @@ import csv
 # simple tool to get single images from the camera feed
 # used for debugging purposes
 
-folder = "snapper"
+save_location = './images/snapper'
+if not os.path.exists(save_location):
+    os.makedirs(save_location)
 
 tracker = ObjectTracker()
 object_name = 'chessboard'
@@ -21,7 +25,7 @@ def get_index():
     Returns:
         Number: next free index
     """
-    images = glob("./images/{}/*.png".format(folder))
+    images = glob("{}/*.png".format(save_location))
     numbers = []
     for fname in images:
         name = fname.split("/")[-1].split(".")[0]
@@ -33,20 +37,20 @@ def get_index():
     return max(numbers) if numbers != [] else 0
 
 
-def processImage(image):
-    """Process the image
-
-    Args:
-        image (numpy.array): current image
-
-    Returns:
-        numpy.array: processed image
-    """
-    # image = cv2.flip(image, 0)
-    # image = cv2.flip(image, 1)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image = cv2.resize(image, (int(2592 / 2), int(2048 / 2)))
-    return image
+# def processImage(image):
+#     """Process the image
+#
+#     Args:
+#         image (numpy.array): current image
+#
+#     Returns:
+#         numpy.array: processed image
+#     """
+#     # image = cv2.flip(image, 0)
+#     # image = cv2.flip(image, 1)
+#     # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+#     # image = cv2.resize(image, (int(2592 / 2), int(2048 / 2)))
+#     return image
 
 
 def main():
@@ -65,19 +69,19 @@ def main():
             if image is None:
                 continue
 
-            image = processImage(image)
+            # image = processImage(image)
 
             cv2.imshow("Camera", image)
             key = cv2.waitKey(5)
-            if key == 113:
+            if key == 113: #q
                 cv2.destroyAllWindows()
                 break
-            if key == 32:
+            if key == 32: #space
                 index += 1
                 sys.stdout.write("\rPicture taken: {}".format(index))
                 sys.stdout.flush()
 
-                filename = "./images/{}/{}.png".format(folder, index)
+                filename = "{}/{}.png".format(save_location, index)
                 cv2.imwrite(filename, image)
 
                 if object_name in tracker.aquire_subjects():
