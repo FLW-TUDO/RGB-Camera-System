@@ -8,7 +8,7 @@ import cv2
 '''
 
 cams = [0, 1, 2, 3, 4, 5]
-recording = '18_46 01_02_2022'
+recording = '21_39 04_02_2022'
 
 def filter_images():
     corrupt_imgs = 0
@@ -45,7 +45,7 @@ def filter_images():
                 else:
                     corrupt_imgs += 1
                     continue
-
+        print(corrupt_imgs)
 
 if __name__ == '__main__':
     filter_images()
