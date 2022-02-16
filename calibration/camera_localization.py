@@ -7,19 +7,38 @@ from scipy.spatial.transform import Rotation as R
 import cv2
 import glob
 import os
+import csv
 
 
-csv_file = 'vicon_pose_chessboard.csv'
-images = './images/snapper/*.png'
+'''
+The script finds the location of a given camera in the vicon frame, assuming a vicon-tracked chessboard is used.
+'''
+
+vicon_chessboard_pose_csv_file = '../vicon_pose_chessboard.csv'
+images = '../images/snapper/cam_localization/*.png'
+cam_locations_csv_file = '../cam_locations.csv'
+
 scale = 130
 a = 7
 b = 5
 
-ret, mtx, dist, newcameramtx, roi, _, _ = get_intrinsics(
-    images, a, b, scale, visulaize=False)
+# ret, mtx, dist, newcameramtx, roi, _, _ = get_intrinsics(
+#     images, a, b, scale, visulaize=False)
 
+newcameramtx = np.array([[784.04003906, 0.0, 624.41500984],
+                [0.0, 783.08575439, 521.11914666],
+                [0.0, 0.0, 1.0]])
+dist = np.array([[-0.18619846, 0.14989978, 0.00036384, -0.00132873, -0.04512847]])
 
 def get_homogenous_form(rot, trans):
+    '''
+    @param rot: rotation matrix
+    @type rot: numpy array
+    @param trans: translation vector
+    @type trans: numpy
+    @return: homogenous form
+    @rtype: numpy array
+    '''
     mat = np.column_stack((rot, trans))
     mat_homog = np.row_stack((mat, [0.0, 0.0, 0.0, 1.0]))
     return mat_homog
@@ -63,8 +82,8 @@ def get_chessboard2vicon_transform(csv_file, img_path):
 
 
 def get_origin_chess2cam_transform(img_path):
-    ret, rvecs, tvecs = get_extrinsics(img_path, a, b, scale, mtx, dist)
-
+    ret, rvecs, tvecs = get_extrinsics(img_path, a, b, scale, newcameramtx, dist)
+    ic(tvecs)
     origin_chess2cam_trans = np.array(tvecs.reshape(1, 3)[0])
     ic(origin_chess2cam_trans)
 
@@ -84,6 +103,10 @@ def get_origin_chess2cam_transform(img_path):
 
 
 def get_origin_chess2chessboard_transform(scale):
+    '''
+        Offset correction from location of marker on chessboard to first corner location (used in extrinsic calculation)
+        Origin_chess is located at the first intersection
+    '''
     origin_chess2chessboard_trans = np.array([scale, scale, 0])
     ic(origin_chess2chessboard_trans)
 
@@ -97,46 +120,57 @@ def get_origin_chess2chessboard_transform(scale):
     # return origin_chess2chessboard_trans, origin_chess2chessboard_rot
     return origin_chess2chessboard_transform
 
+def get_cam2vicon_transform(img_path):
+    chessboard2vicon_transform = get_chessboard2vicon_transform(vicon_chessboard_pose_csv_file, img_path)
+    origin_chess2cam_transform = get_origin_chess2cam_transform(img_path)
+    origin_chess2chessboard_transform = get_origin_chess2chessboard_transform(scale)
+
+    origin_chess2vicon_transform = chessboard2vicon_transform.dot(origin_chess2chessboard_transform)
+    cam2vicon_transform = origin_chess2vicon_transform.dot(np.linalg.inv(origin_chess2cam_transform))
+    ic(cam2vicon_transform)
+    cam2vicon_trans = cam2vicon_transform[0:3, 3]
+    cam2vicon_rot = cam2vicon_transform[0:3, 0:3]
+
+    # cam2vicon_rot_mat = R.from_matrix(cam2vicon_transform[0:3, 0:3])
+    # cam2vicon_rot_euler = np.degrees(cam2vicon_rot_mat.as_euler('xyz', degrees=False))
+    return cam2vicon_trans, cam2vicon_rot #as a rotation matrix
+
+#TODO: retrieve intrinsics according to cam id
+def get_cam_location(images_path, cam_id=0):
+    images = glob.glob(images_path)
+    cam2vicon_trans_list = np.array([0, 0, 0])
+    cam2vicon_rot_list = np.array([0, 0, 0])
+    for img in images:
+        trans, rot = get_cam2vicon_transform(img)
+        cam2vicon_trans_list = np.add(cam2vicon_trans_list, trans)
+        cam2vicon_rot_mat = R.from_matrix(rot)
+        cam2vicon_rot_euler = np.degrees(cam2vicon_rot_mat.as_euler('xyz', degrees=False))
+        cam2vicon_rot_list = np.add(cam2vicon_rot_list, cam2vicon_rot_euler)
+        ic(cam2vicon_trans_list)
+        ic(cam2vicon_rot_list)
+    cam2vicon_trans_avg = np.divide(cam2vicon_trans_list, len(images))
+    ic(cam2vicon_trans_avg)
+    # TODO: convert to quaternion to get average - slerp
+    cam2vicon_rot_avg = np.divide(cam2vicon_rot_list, len(images))
+    ic(cam2vicon_rot_avg)
+    cam2vicon_rot_avg = R.from_euler('xyz', cam2vicon_rot_avg, degrees=True)
+    cam2vicon_rot_avg_mat = cam2vicon_rot_avg.as_matrix()
+    ic(cam2vicon_rot_avg_mat)
+    save_cam_location(cam_locations_csv_file, cam_id, cam2vicon_trans_avg.tolist(), cam2vicon_rot_avg_mat.tolist())
+    return cam2vicon_trans_avg, cam2vicon_rot_avg_mat
+
+#TODO: add header
+def save_cam_location(csv_file, cam_id, cam_trans, cam_rot):
+    with open(csv_file, 'a', newline='') as out_file:
+        writer = csv.writer(out_file)
+        #header = ['cam_id', 'cam_trans', 'cam_rot']
+        #writer.writerow(header)
+        data = [cam_id, cam_trans, cam_rot]
+        writer.writerow(data)
+
 
 if __name__ == '__main__':
-    images = glob.glob(images)
-    cam2vicon_trans_sum = 0
-    # cam2vicon_rot_euler_cos_sum = 0
-    # cam2vicon_rot_euler_sin_sum = 0
-    cam2vicon_rot_euler_sum = 0
-    for fName in images:
-        chessboard2vicon_transform = get_chessboard2vicon_transform(
-            csv_file, fName)
-        origin_chess2cam_transform = get_origin_chess2cam_transform(
-            fName)
-        origin_chess2chessboard_transform = get_origin_chess2chessboard_transform(
-            scale)
+    trans, rot = get_cam_location(images)
+    ic(trans)
+    ic(rot)
 
-        origin_chess2vicon_transform = chessboard2vicon_transform.dot(
-            origin_chess2chessboard_transform)
-        cam2vicon_transform = origin_chess2vicon_transform.dot(
-            np.linalg.inv(origin_chess2cam_transform))
-        ic(cam2vicon_transform)
-
-        cam2vicon_trans_sum += cam2vicon_transform[0:3, 3]
-
-        cam2vicon_rot = R.from_matrix(cam2vicon_transform[0:3, 0:3])
-        cam2vicon_rot_euler = cam2vicon_rot.as_euler('xyz', degrees=False)
-        ic(np.degrees(cam2vicon_rot_euler))
-
-        # cam2vicon_rot_euler_cos_sum += np.cos(cam2vicon_rot_euler)
-        # cam2vicon_rot_euler_sin_sum += np.sin(cam2vicon_rot_euler)
-
-        cam2vicon_rot_euler_sum += cam2vicon_rot_euler
-
-    ic(cam2vicon_trans_sum)
-    cam2vicon_trans_avg = np.divide(cam2vicon_trans_sum, len(images))
-    ic(cam2vicon_trans_avg)
-
-    # cam2vicon_rot_euler_avg = np.degrees(np.arctan(np.divide(
-    #     cam2vicon_rot_euler_sin_sum, len(images)), np.divide(cam2vicon_rot_euler_cos_sum, len(images))))
-    # ic(cam2vicon_rot_euler_avg)
-
-    cam2vicon_rot_euler_avg = np.degrees(
-        np.divide(cam2vicon_rot_euler_sum, len(images)))
-    ic(cam2vicon_rot_euler_avg)
