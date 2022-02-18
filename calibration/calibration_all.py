@@ -18,16 +18,17 @@ def get_intrinsics(imgs_path, a, b, scale, visulaize):
     imgpoints = []
     objp = initialize_obj_points(a, b, scale)
     for fName in images:
+        print(fName)
         img = cv2.imread(fName)
         ret, corners2, gray = create_img_points(img, a, b)
         objpoints.append(objp)
         imgpoints.append(corners2)
         if visulaize == True:
-            draw_chessboard_pts(img, a, b, corners2, ret)
+            draw_chessboard_pts(img, a, b, corners2, ret, fName)
             key = cv2.waitKey(0)
             if key == 113:  # q
-                cv2.destroyAllWindows()
                 visulaize = False
+            cv2.destroyAllWindows()
     print('Calculating Intrinsics')
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
         objpoints, imgpoints, gray.shape[::-1], None, None)
@@ -63,10 +64,10 @@ def create_img_points(img, a, b):   # TODO: check flags
         return ret, corners2, gray
 
 
-def draw_chessboard_pts(img, a, b, corners2, ret):
+def draw_chessboard_pts(img, a, b, corners2, ret, name=''):
     # Draw and display the corners
     cv2.drawChessboardCorners(img, (a, b), corners2, ret)
-    cv2.imshow('img', img)
+    cv2.imshow(f'{name}', img)
 
 
 def draw_lines(img, corners, proj_pts):
@@ -87,7 +88,7 @@ def undistort(imgs_path, mtx, dist, newcameramtx, roi, visualize):
         x, y, w, h = roi
         undistorted_img = undistorted_img[y:y+h, x:x+w]
         if visualize == True:
-            cv2.imshow('img', undistorted_img)
+            cv2.imshow('Undistorted', undistorted_img)
             key = cv2.waitKey(0)
             if key == 113:  # q
                 cv2.destroyAllWindows()
@@ -119,28 +120,28 @@ def axis_select(input, scale):
     return axis
 
 
-def get_reproj_error(objpoints, imgpoints):
-    mean_error = 0
-    for i in range(len(objpoints)):
-        imgpoints2, _ = cv2.projectPoints(
-            objpoints[i], rvecs[i], tvecs[i], mtx, dist)
-        error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2)/len(imgpoints2)
-        mean_error += error
-    print("total error: {}".format(mean_error/len(objpoints)))
+# def get_reproj_error(objpoints, imgpoints):
+#     mean_error = 0
+#     for i in range(len(objpoints)):
+#         imgpoints2, _ = cv2.projectPoints(
+#             objpoints[i], rvecs[i], tvecs[i], mtx, dist)
+#         error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2)/len(imgpoints2)
+#         mean_error += error
+#     print("total error: {}".format(mean_error/len(objpoints)))
 
 
 if __name__ == "__main__":
     scale = 130
     a = 7
     b = 5
-    imgs_path = './images/snapper/*.png'
+    imgs_path = '../images/snapper/*.png'
     ret, mtx, dist, newcameramtx, roi, _, _ = get_intrinsics(
         imgs_path, a, b, scale, visulaize=True)
-    ic(mtx)
+    # ic(mtx)
     ic(newcameramtx)
     ic(dist)
-    ret, rvecs, tvecs = get_extrinsics(imgs_path, a, b, scale, mtx, dist)
-    ic(tvecs)
-    ic(rvecs)
+    # ret, rvecs, tvecs = get_extrinsics(imgs_path, a, b, scale, mtx, dist)
+    # ic(tvecs)
+    # ic(rvecs)
     undistorted_img = undistort(
         imgs_path, mtx, dist, newcameramtx, roi, visualize=True)
