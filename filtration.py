@@ -7,14 +7,14 @@ import cv2
     Simple script for manually filtering out invalid images
 '''
 
-cams = [0, 1, 2, 3, 4, 5]
-recording = '21_39 04_02_2022'
+cams = [0, 1]
+recording = '17_24 17_02_2022'
 
 def filter_images():
     corrupt_imgs = 0
     for cam in cams:
-        recording_path = os.path.join('./recordings', recording, f'camera_{cam}', 'images')
-        filtered_path = os.path.join('./recordings', recording + '_filtered', f'camera_{cam}', 'images')
+        recording_path = os.path.join('./recordings', recording, f'camera_{cam}')
+        filtered_path = os.path.join('./recordings', recording + '_filtered', f'camera_{cam}')
         if not os.path.exists(filtered_path):
             os.makedirs(filtered_path)
         csv_gt = os.path.join(recording_path, 'data.csv')
@@ -34,7 +34,8 @@ def filter_images():
                     key = cv2.waitKey(0)
                     if key == 97: #a
                         print('Image Accepted')
-                        shutil.copy2(img_path, filtered_path)
+                        filtered_path_images = os.path.join(filtered_path, 'images')
+                        shutil.copy2(img_path, filtered_path_images)
                         writer.writerow(row)
                     elif key == 114: #r
                         print('Image Rejected!')
