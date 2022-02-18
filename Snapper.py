@@ -16,7 +16,7 @@ if not os.path.exists(save_location):
 
 tracker = ObjectTracker()
 object_name = 'chessboard'
-cam = Camera(2)
+cam = Camera(4)
 
 
 def get_index():
@@ -61,11 +61,11 @@ def main():
     tracker.connect()
     index = get_index()
 
-    with open("vicon_pose_chessboard.csv", "a") as f:
+    with open("vicon_pose_chessboard.csv", "w") as f:
         writer = csv.writer(f)
         # writer.writerow(['image', 'translation', 'rotation'])
         while True:
-            image = cam.getImage()
+            image = cam.getImage(False)
             if image is None:
                 continue
 
