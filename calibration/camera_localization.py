@@ -1,5 +1,5 @@
 import csv
-from calibration_all import get_intrinsics, get_extrinsics
+from calibration.calibration_all import get_intrinsics, get_extrinsics
 from icecream import ic
 import numpy as np
 import ast
@@ -167,6 +167,14 @@ def save_cam_location(csv_file, cam_id, cam_trans, cam_rot):
         #writer.writerow(header)
         data = [cam_id, cam_trans, cam_rot]
         writer.writerow(data)
+
+def invert_homog_transfrom(homog_trans):
+    trans = homog_trans[0:3, 3]
+    rot = homog_trans[0:3, 0:3]
+    rot_inv = np.linalg.inv(rot)
+    homog_inv = get_homogenous_form(rot_inv, -1*(rot_inv.dot(trans)))
+    ic(homog_inv)
+    return homog_inv
 
 
 if __name__ == '__main__':
