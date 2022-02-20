@@ -7,8 +7,8 @@ import cv2
     Simple script for manually filtering out invalid images
 '''
 
-cams = [0, 1]
-recording = '17_24 17_02_2022'
+cams = [2, 7]
+recording = '22_50 20_02_2022'
 
 def filter_images():
     corrupt_imgs = 0
@@ -19,6 +19,9 @@ def filter_images():
             os.makedirs(filtered_path)
         csv_gt = os.path.join(recording_path, 'data.csv')
         csv_filtered = os.path.join(filtered_path, 'data.csv')
+        filtered_path_images = os.path.join(filtered_path, 'images')
+        if not os.path.exists(filtered_path_images):
+            os.makedirs(filtered_path_images)
         with open(csv_gt) as in_file, open(csv_filtered, 'w', newline='') as out_file:
             reader = csv.reader(in_file)
             reader_list = list(reader)
@@ -34,7 +37,6 @@ def filter_images():
                     key = cv2.waitKey(0)
                     if key == 97: #a
                         print('Image Accepted')
-                        filtered_path_images = os.path.join(filtered_path, 'images')
                         shutil.copy2(img_path, filtered_path_images)
                         writer.writerow(row)
                     elif key == 114: #r
