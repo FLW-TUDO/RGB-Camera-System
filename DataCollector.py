@@ -8,17 +8,16 @@ from calibration.obj_gt_pose import get_obj_gt_transform
 
 
 obj_ids = {"KLT_8_neu": 1,
-           "KLT_27_neu": 2,
-           "KLT_32_neu": 3
+           "KLT_32_neu": 2
            }
-cameras = [0, 1]  # 0,1,2,3,4,5,6,7
+cameras = [2, 7]  # 0,1,2,3,4,5,6,7
 path = "recordings"
 
 
 class Processor(Thread):
     def __init__(self, index):
         Thread.__init__(self)
-        self.name = f"camera_{index}"
+        self.name = index
         self.imageIndex = 0
         self.running = True
 
@@ -50,9 +49,8 @@ class Processor(Thread):
         while self.running:
             data = {"image": self.camera.getImage()}
             for obj in list(obj_ids.keys()):
-                #data['objects']
-                obj_trans = get_obj_gt_transform(self.camera, obj)[0]
-                obj_rot = get_obj_gt_transform(self.camera, obj)[1]
+                obj_trans = get_obj_gt_transform(self.name, obj)[0]
+                obj_rot = get_obj_gt_transform(self.name, obj)[1]
                 pose = {'obj_trans': obj_trans, 'obj_rot': obj_rot}
                 pose_copy = copy.deepcopy(pose)
                 data[obj] = pose_copy
@@ -71,7 +69,7 @@ class Processor(Thread):
         """
         Writes as csv line and an image file for each object present in the scene
         """
-        cam_path = os.path.join(self.folder_path, self.name)
+        cam_path = os.path.join(self.folder_path, f'camera_{self.name}')
         images_path = os.path.join(cam_path, 'images')
         if not os.path.exists(images_path):
             os.makedirs(images_path)
