@@ -1,3 +1,5 @@
+import os.path
+
 import cv2
 import numpy as np
 import glob
@@ -37,11 +39,11 @@ def get_intrinsics(imgs_path, a, b, scale, visulaize):
     return ret, mtx, dist, newcameramtx, roi, rvecs, tvecs
 
 
-def get_extrinsics(img, a, b, scale, mtx, dist):
+def get_extrinsics(img_path, a, b, scale, mtx, dist):
     # images = glob.glob(imgs_path)
     objp = initialize_obj_points(a, b, scale)
     # for fName in images:
-    img = cv2.imread(img)
+    img = cv2.imread(img_path)
     ret, corners2, gray = create_img_points(img, a, b)
     ret, rvecs, tvecs = cv2.solvePnP(objp, corners2, mtx, dist)
     if ret:
@@ -79,6 +81,13 @@ def draw_lines(img, corners, proj_pts):
 
 
 def undistort(imgs_path, mtx, dist, newcameramtx, roi, visualize):
+    '''
+    @param imgs_path: directory of images to be undistorted
+    @type imgs_path: str
+    ...
+    @return: image matrix
+    @rtype: np array
+    '''
     images = glob.glob(imgs_path)
     print('Undistorting images')
     for fName in images:
@@ -95,6 +104,30 @@ def undistort(imgs_path, mtx, dist, newcameramtx, roi, visualize):
                 break
     return undistorted_img
 
+
+def undistort_and_save(img_path, mtx, dist, newcameramtx, roi, visualize, save_path=None):
+    '''
+    @param imgs_path: single image to be undistorted
+    @type imgs_path: str
+    ...
+    @return: undistorted image path
+    @rtype: str
+    '''
+    print('Undistorting images')
+    img = cv2.imread(img_path)
+    undistorted_img = cv2.undistort(img, mtx, dist, None, newcameramtx)
+    # crop the image
+    x, y, w, h = roi
+    undistorted_img = undistorted_img[y:y+h, x:x+w]
+    img_id = os.path.split(img_path)[-1].split('.')[-2]
+    final_path = os.path.join(save_path, img_id+'.png')
+    cv2.imwrite(final_path, undistorted_img)
+    if visualize == True:
+        cv2.imshow('Undistorted', undistorted_img)
+        key = cv2.waitKey(0)
+        if key == 113:  # q
+            cv2.destroyAllWindows()
+    return final_path
 
 def draw_cube(img, corners, proj_pts, line_width=3):
     proj_pts = np.int32(proj_pts).reshape(-1, 2)
@@ -137,9 +170,10 @@ if __name__ == "__main__":
     imgs_path = '../images/snapper/*.png'
     ret, mtx, dist, newcameramtx, roi, _, _ = get_intrinsics(
         imgs_path, a, b, scale, visulaize=True)
-    # ic(mtx)
+    ic(mtx)
     ic(newcameramtx)
     ic(dist)
+    ic(roi)
     # ret, rvecs, tvecs = get_extrinsics(imgs_path, a, b, scale, mtx, dist)
     # ic(tvecs)
     # ic(rvecs)
