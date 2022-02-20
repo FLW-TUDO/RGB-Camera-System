@@ -31,8 +31,8 @@ mtx = np.array([[870.04652949,   0.0, 644.25313422],
                 [0.0, 870.04874977, 543.69294777],
                 [0.0,   0.0,   1.0]])
 newcameramtx = np.array([[808.68377686,   0.0, 643.57414451],
-                         [0.0, 810.70056152, 547.12750201],
-                         [0.0,   0.0,   1.0]])
+                        [0.0, 810.70056152, 547.12750201],
+                        [0.0,   0.0,   1.0]])
 dist = np.array([[-0.164559885,  0.108215606,  0.00257066836, -0.000120995529, -0.00928914594]])
 roi = (5, 10, 1285, 1003)
 
@@ -135,7 +135,7 @@ def get_cam2vicon_transform(img_path):
     return cam2vicon_trans, cam2vicon_rot #as a rotation matrix
 
 #TODO: retrieve intrinsics according to cam id
-def get_cam_location(images_path, cam_id=7, use_undist=True):
+def get_cam_location(images_path, cam_id, use_undist=True):
     images = glob.glob(images_path)
     cam2vicon_trans_list = np.array([0, 0, 0])
     cam2vicon_rot_list = np.array([0, 0, 0])
