@@ -134,3 +134,5 @@ images/
 doc_imgs/
 *.npy
 *.csv
+
+calibration/calibration_imgs_*

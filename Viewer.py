@@ -94,7 +94,7 @@ from Camera.CVBCamera import Camera
 
 if __name__ == "__main__":
     # the selected cameras out of [0,1,2,3,4,5,6,7]
-    camera_ids = [0, 1, 2, 3, 4, 5, 6, 7]
+    camera_ids = [0, 1, 2, 3, 4, 5]
 
     cameras = []
     for cam_id in camera_ids:
