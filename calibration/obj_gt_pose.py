@@ -30,7 +30,9 @@ def get_obj_gt_transform(cam_id, obj_id):
         reader_list = list(reader)
         #header = reader_list[0]
         for row in reader_list[0:]:
-            if int(row[0]) == cam_id:
+            ic(row)
+            ic(cam_id)
+            if row[0] == cam_id:
                 cam2vicon_trans = np.array(ast.literal_eval(row[1]))
                 cam2vicon_rot = np.array(ast.literal_eval(row[2])) # rotation matrix
                 cam2vicon_transform = get_homogenous_form(cam2vicon_rot, cam2vicon_trans)
@@ -50,20 +52,6 @@ def get_obj_gt_transform(cam_id, obj_id):
     return obj2cam_trans, obj2cam_rot
 
 
-# #TODO: verify intrinsic and extrinsic rotations
-# def convert_to_rotation_matrix(rot):
-#     '''
-#     Converts quaterion or euler angles (with XYZ intrisic orientation) to rotation matrix
-#     '''
-#     if len(rot) == 3: #euler with XYZ intrinsic rotation
-#         rot_euler = R.from_euler('XYZ', rot)
-#         rot_mat = rot_euler.as_matrix()
-#     elif len(rot) == 4: #quaternion
-#         rot_quat = R.from_quat(rot)
-#         rot_mat = rot_quat.as_matrix()
-#     return rot_mat
-
-
 def invert_homog_transfrom(homog_trans):
     trans = homog_trans[0:3, 3]
     rot = homog_trans[0:3, 0:3]
@@ -74,7 +62,7 @@ def invert_homog_transfrom(homog_trans):
 
 
 if __name__ == '__main__':
-    get_obj_gt_transform(0, 'KLT_32_neu')
+    get_obj_gt_transform(0, 'KLT_9_neu')
 
 '''
 Sample transformation:
