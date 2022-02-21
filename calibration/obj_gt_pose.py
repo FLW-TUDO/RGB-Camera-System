@@ -32,7 +32,7 @@ def get_obj_gt_transform(cam_id, obj_id):
         for row in reader_list[0:]:
             ic(row)
             ic(cam_id)
-            if row[0] == cam_id:
+            if int(row[0]) == cam_id:
                 cam2vicon_trans = np.array(ast.literal_eval(row[1]))
                 cam2vicon_rot = np.array(ast.literal_eval(row[2])) # rotation matrix
                 cam2vicon_transform = get_homogenous_form(cam2vicon_rot, cam2vicon_trans)
@@ -62,37 +62,4 @@ def invert_homog_transfrom(homog_trans):
 
 
 if __name__ == '__main__':
-    get_obj_gt_transform(0, 'KLT_9_neu')
-
-'''
-Sample transformation:
-
-    klt_trans = vicon.aquire_Object_Trans(object_name='KLT_32_neu')
-    ic(klt_trans)
-    klt_rot = vicon.aquire_Object_RotEuler(object_name='KLT_32_neu')
-    ic(klt_rot)
-    klt_rot_obj = R.from_euler('XYZ', klt_rot, degrees=False)
-    klt_rot_mat = klt_rot_obj.as_matrix()
-    ic(klt_rot_mat)
-
-
-    obj2vicon_transform = get_homogenous_form(klt_rot_mat, klt_trans)
-    ic(obj2vicon_transform)
-
-    cam_trans = vicon.aquire_Object_Trans(object_name='camera')
-    ic(cam_trans)
-    cam_rot = vicon.aquire_Object_RotEuler(object_name='camera')
-    ic(cam_rot)
-    cam_rot_obj = R.from_euler('XYZ', cam_rot, degrees=False)
-    cam_rot_mat = cam_rot_obj.as_matrix()
-    ic(cam_rot_mat)
-
-
-    cam2vicon_transform = get_homogenous_form(cam_rot_mat, cam_trans)
-    ic(cam2vicon_transform)
-
-    obj2cam_transform = invert_homog_transfrom(cam2vicon_transform).dot(obj2vicon_transform) # where KLT is situated wrt camera frame
-    ic(obj2cam_transform)
-    obj2cam_trans = obj2cam_transform[0:3, 3]
-    obj2cam_rot = obj2cam_transform[0:3, 0:3]
-'''
+    get_obj_gt_transform(6, 'KLT_8_neu')
