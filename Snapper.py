@@ -16,11 +16,12 @@ if not os.path.exists(save_location):
 
 tracker = ObjectTracker()
 object_name = 'chessboard'
-cam = Camera(4)
+cam_id = 1
+cam = Camera(cam_id)
 
 
 def get_index():
-    """Retrives next biggest free indeex
+    """Retrives next biggest free index
 
     Returns:
         Number: next free index
@@ -61,9 +62,9 @@ def main():
     tracker.connect()
     index = get_index()
 
-    with open("vicon_pose_chessboard.csv", "w") as f:
+    with open("vicon_pose_chessboard.csv", "a") as f:
         writer = csv.writer(f)
-        # writer.writerow(['image', 'translation', 'rotation'])
+        #writer.writerow(['cam_id', 'image', 'translation', 'rotation'])
         while True:
             image = cam.getImage(False)
             if image is None:
@@ -91,7 +92,7 @@ def main():
                         object_name)
 
                     writer.writerow(
-                        [f"img_{index}", vicon_translation, vicon_rotation])
+                        [f"cam_{cam_id}", f"img_{index}", vicon_translation, vicon_rotation])
 
     cam.close()
 
