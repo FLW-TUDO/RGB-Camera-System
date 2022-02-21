@@ -2,7 +2,9 @@ import copy
 from Camera.CVBCamera import Camera
 from PyVicon.vicon_tracker import ObjectTracker
 from threading import Thread
-import os, csv, cv2
+import os
+import csv
+import cv2
 from datetime import datetime
 from calibration.obj_gt_pose import get_obj_gt_transform
 
@@ -27,7 +29,8 @@ class Processor(Thread):
         Like:
         ./recordings/11_11_11 08_11_2021/camera_0/images
         """
-        now = datetime.now().strftime("%H_%M %d_%m_%Y") #adding seconds results in multiple directories creation
+        now = datetime.now().strftime(
+            "%H_%M %d_%m_%Y")  # adding seconds results in multiple directories creation
         self.folder_path = os.path.join(path, now)
 
         self.camera = Camera(index)
@@ -47,20 +50,29 @@ class Processor(Thread):
             }
         """
         while self.running:
-            data = {"image": self.camera.getImage()}
-            for obj in list(obj_ids.keys()):
-                obj_trans = get_obj_gt_transform(self.name, obj)[0]
-                obj_rot = get_obj_gt_transform(self.name, obj)[1]
-                pose = {'obj_trans': obj_trans, 'obj_rot': obj_rot}
-                pose_copy = copy.deepcopy(pose)
-                data[obj] = pose_copy
-                #print(data[obj])
+            image = self.camera.getImage()
+            if image is None:
+                continue
+            cv2.imshow(f'Camera {self.name}?', image)
+            key = cv2.waitKey(5)
+            if key == 113:  # q
+                cv2.destroyAllWindows()
+                break
+            if key == 32:  # space
+                data = {"image": image}
+                for obj in list(obj_ids.keys()):
+                    obj_trans = get_obj_gt_transform(self.name, obj)[0]
+                    obj_rot = get_obj_gt_transform(self.name, obj)[1]
+                    pose = {'obj_trans': obj_trans, 'obj_rot': obj_rot}
+                    pose_copy = copy.deepcopy(pose)
+                    data[obj] = pose_copy
+                    # print(data[obj])
 
-            if self.imageIndex == 0:
-                self.writeData(data, header=True)
-            self.writeData(data, header=False)
-            self.imageIndex += 1
-            data.clear()
+                if self.imageIndex == 0:
+                    self.writeData(data, header=True)
+                self.writeData(data, header=False)
+                self.imageIndex += 1
+                data.clear()
 
     def stop(self):
         self.running = False
@@ -76,24 +88,27 @@ class Processor(Thread):
         with open(os.path.join(cam_path, "data.csv"), "a", newline="") as csvfile:
             writer = csv.writer(csvfile)
             if header:
-                writer.writerow(['ObjectID', 'ImageName', 'camToObjTrans', 'camToObjRot', 'symmetry'])
+                writer.writerow(
+                    ['ObjectID', 'ImageName', 'camToObjTrans', 'camToObjRot', 'symmetry'])
             else:
-                #print(data.keys())
+                # print(data.keys())
                 # obj_keys = []
                 # for key in list(data.keys()):
                 #     if key is not 'image': # get object IDs
                 #         obj_keys.append(key)
                 for obj in list(obj_ids.keys()):
-                    img_path = os.path.join(images_path, str(self.imageIndex) + '.png')
+                    img_path = os.path.join(
+                        images_path, str(self.imageIndex) + '.png')
                     #print(f'Obj ID: {obj}, Img path: {img_path}, Trans: {data[obj]["obj_trans"]}, Rot: {data[obj]["obj_rot"]}')
-                    writer.writerow([obj_ids[obj], img_path, data[obj]['obj_trans'], data[obj]['obj_rot']])
+                    writer.writerow(
+                        [obj_ids[obj], img_path, data[obj]['obj_trans'], data[obj]['obj_rot']])
                 cv2.imwrite(img_path, data["image"])
 
 
 if __name__ == "__main__":
     processors = [Processor(index)for index in cameras]
-    capture_time = 2000 #ms
-    #TODO: replace loop with button snapping
+    capture_time = 2000  # ms
+    # TODO: replace loop with button snapping
     while True:
         for processor in processors:
             #cv2.imshow(f'cam_{processor.name}', processor.camera.getImage())
