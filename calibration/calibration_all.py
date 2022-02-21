@@ -45,6 +45,7 @@ def get_extrinsics(img_path, a, b, scale, mtx, dist):
     # for fName in images:
     img = cv2.imread(img_path)
     ret, corners2, gray = create_img_points(img, a, b)
+    ic(ret)
     ret, rvecs, tvecs = cv2.solvePnP(objp, corners2, mtx, dist)
     if ret:
         return ret, rvecs, tvecs
@@ -64,6 +65,8 @@ def create_img_points(img, a, b):   # TODO: check flags
         corners2 = cv2.cornerSubPix(
             gray, corners, (11, 11), (-1, -1), criteria)
         return ret, corners2, gray
+    else:
+        print('Checkerboard intersection points Not found!')
 
 
 def draw_chessboard_pts(img, a, b, corners2, ret, name=''):
