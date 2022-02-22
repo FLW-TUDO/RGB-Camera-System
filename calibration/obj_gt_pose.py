@@ -15,7 +15,8 @@ from scipy.spatial.transform import Rotation as R
 vicon = ObjectTracker()
 vicon.connect()
 
-cam_locations_csv_file = '../cam_locations.csv'
+# cam_locations_csv_file = './cam_locations.csv'
+cam_locations_csv_file = '/media/athos/DATA-III/projects/RGB-Camera-System/cam_locations.csv'
 
 
 def get_obj2vicon_transform(obj_id):
@@ -30,8 +31,6 @@ def get_obj_gt_transform(cam_id, obj_id):
         reader_list = list(reader)
         #header = reader_list[0]
         for row in reader_list[0:]:
-            ic(row)
-            ic(cam_id)
             if int(row[0]) == cam_id:
                 cam2vicon_trans = np.array(ast.literal_eval(row[1]))
                 cam2vicon_rot = np.array(ast.literal_eval(row[2])) # rotation matrix
@@ -46,8 +45,8 @@ def get_obj_gt_transform(cam_id, obj_id):
 
     obj2cam_transform = invert_homog_transfrom(cam2vicon_transform).dot(obj2vicon_transform)
     ic(obj2cam_transform)
-    obj2cam_trans = obj2cam_transform[0:3, 3]
-    obj2cam_rot = obj2cam_transform[0:3, 0:3]
+    obj2cam_trans = obj2cam_transform[0:3, 3].tolist()
+    obj2cam_rot = obj2cam_transform[0:3, 0:3].tolist()
 
     return obj2cam_trans, obj2cam_rot
 
