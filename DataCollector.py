@@ -34,9 +34,24 @@ class Processor(Thread):
         self.folder_path = os.path.join(path, now)
 
         self.camera = Camera(index)
+        self.image = None
         self.start()
 
     def run(self):
+        """
+            Simple visualization helper for each camera
+        """
+        while self.running:
+            image = self.camera.getImage()
+            if image is None:
+                continue
+            cv2.imshow(f'Camera {self.name}?', image)
+            key = cv2.waitKey(1)
+            if key == 113:  # q
+                cv2.destroyAllWindows()
+                break
+
+    def save(self):
         """
         Gets poses for all objects of interest that could (possibly) be within the camera view.
         The annotated output would contain as many images with the same ID (and different obj id) as there are objects
@@ -49,30 +64,20 @@ class Processor(Thread):
             "object_0001": dict | object translation and rotation
             }
         """
-        while self.running:
-            image = self.camera.getImage()
-            if image is None:
-                continue
-            cv2.imshow(f'Camera {self.name}?', image)
-            key = cv2.waitKey(5)
-            if key == 113:  # q
-                cv2.destroyAllWindows()
-                break
-            if key == 32:  # space
-                data = {"image": image}
-                for obj in list(obj_ids.keys()):
-                    obj_trans = get_obj_gt_transform(self.name, obj)[0]
-                    obj_rot = get_obj_gt_transform(self.name, obj)[1]
-                    pose = {'obj_trans': obj_trans, 'obj_rot': obj_rot}
-                    pose_copy = copy.deepcopy(pose)
-                    data[obj] = pose_copy
-                    # print(data[obj])
+        data = {"image": self.camera.getImage()}
+        for obj in list(obj_ids.keys()):
+            obj_trans = get_obj_gt_transform(self.name, obj)[0]
+            obj_rot = get_obj_gt_transform(self.name, obj)[1]
+            pose = {'obj_trans': obj_trans, 'obj_rot': obj_rot}
+            pose_copy = copy.deepcopy(pose)
+            data[obj] = pose_copy
+            # print(data[obj])
 
-                if self.imageIndex == 0:
-                    self.writeData(data, header=True)
-                self.writeData(data, header=False)
-                self.imageIndex += 1
-                data.clear()
+        if self.imageIndex == 0:
+            self.writeData(data, header=True)
+        self.writeData(data, header=False)
+        self.imageIndex += 1
+        data.clear()
 
     def stop(self):
         self.running = False
@@ -107,14 +112,16 @@ class Processor(Thread):
 
 if __name__ == "__main__":
     processors = [Processor(index)for index in cameras]
-    capture_time = 2000  # ms
     # TODO: replace loop with button snapping
     while True:
-        for processor in processors:
-            #cv2.imshow(f'cam_{processor.name}', processor.camera.getImage())
-            key = cv2.waitKey(capture_time)
-            if key == 27:
-                break
+        key = cv2.waitKey(5)
+        if key == 27:
+            break
+        if key == 32:
+            for processor in processors:
+                processor.save()
+                #cv2.imshow(f'cam_{processor.name}', processor.camera.getImage())
+
 
     for processor in processors:
         processor.stop()
