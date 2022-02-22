@@ -17,7 +17,7 @@ The script finds the location of a given camera in the vicon frame using snapped
 vicon_chessboard_pose_csv_file = '../vicon_pose_chessboard.csv' #intermediary csv file
 images = '../images/snapper/cam_localization/*.png'
 images_undist = '../images/snapper/cam_localization/undistorted'
-cam_locations_csv_file = '../cam_locations.csv' #final csv file
+cam_locations_csv_file = './cam_locations.csv' #final csv file
 calib_params_csv_file = '../calib_params_all.csv'
 
 scale = 130

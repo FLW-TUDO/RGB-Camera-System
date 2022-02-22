@@ -7,8 +7,8 @@ import cv2
     Simple script for manually filtering out invalid images
 '''
 
-cams = [2, 7]
-recording = '23_57 20_02_2022'
+cams = [2, 5]
+recording = '12_29 22_02_2022'
 
 
 def filter_images():
