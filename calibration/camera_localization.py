@@ -1,6 +1,7 @@
 import csv
 from calibration.calibration_all import get_extrinsics, undistort_and_save
 from icecream import ic
+ic.disable()
 import numpy as np
 import ast
 from scipy.spatial.transform import Rotation as R
@@ -17,7 +18,7 @@ The script finds the location of a given camera in the vicon frame using snapped
 vicon_chessboard_pose_csv_file = '../vicon_pose_chessboard.csv' #intermediary csv file
 images = '../images/snapper/cam_localization/*.png'
 images_undist = '../images/snapper/cam_localization/undistorted'
-cam_locations_csv_file = './cam_locations.csv' #final csv file
+cam_locations_csv_file = '../cam_locations.csv' #final csv file
 calib_params_csv_file = '../calib_params_all.csv'
 
 scale = 130
@@ -144,30 +145,43 @@ def get_cam2vicon_transform(img_path, cam_id):
 #TODO: retrieve intrinsics according to cam id
 def get_cam_location(images_path, cam_id, use_undist=True):
     images = glob.glob(images_path)
-    cam2vicon_trans_list = np.array([0, 0, 0])
-    cam2vicon_rot_list = np.array([0, 0, 0])
+    # cam2vicon_trans_list = np.array([0, 0, 0])
+    # cam2vicon_rot_list = np.array([0, 0, 0])
+    cam2vicon_trans_list = []
+    cam2vicon_rot_list = []
     for img_path in images:
+        print(img_path)
         if use_undist:
             mtx, newcameramtx, dist, roi = get_calib_params(calib_params_csv_file, cam_id)
-            img_path = undistort_and_save(img_path, mtx, dist, newcameramtx, roi, visualize=True, save_path=images_undist)
-            ic(img_path)
+            img_path = undistort_and_save(img_path, mtx, dist, newcameramtx, roi, visualize=False, save_path=images_undist)
         trans, rot = get_cam2vicon_transform(img_path, cam_id)
-        cam2vicon_trans_list = np.add(cam2vicon_trans_list, trans)
+        cam2vicon_trans_list.append(trans)
+        #print(trans)
+        # cam2vicon_trans_list = np.add(cam2vicon_trans_list, trans)
         cam2vicon_rot_mat = R.from_matrix(rot)
         cam2vicon_rot_euler = np.degrees(cam2vicon_rot_mat.as_euler('XYZ', degrees=False))
-        cam2vicon_rot_list = np.add(cam2vicon_rot_list, cam2vicon_rot_euler)
-        ic(cam2vicon_trans_list)
-        ic(cam2vicon_rot_list)
-    cam2vicon_trans_avg = np.divide(cam2vicon_trans_list, len(images))
-    ic(cam2vicon_trans_avg)
+        #print(cam2vicon_rot_euler)
+        # cam2vicon_rot_list = np.add(cam2vicon_rot_list, cam2vicon_rot_euler)
+        cam2vicon_rot_list.append(cam2vicon_rot_euler)
+        # ic(cam2vicon_trans_list)
+        # ic(cam2vicon_rot_list)
+    # cam2vicon_trans_avg = np.divide(cam2vicon_trans_list, len(images))
+    # ic(cam2vicon_trans_avg)
+    # print(cam2vicon_trans_avg)
+    #print(cam2vicon_trans_list)
+    cam2vicon_trans_median = np.median(cam2vicon_trans_list, axis=0)
+    #print(cam2vicon_trans_median)
     # TODO: convert to quaternion to get average - slerp
-    cam2vicon_rot_avg = np.divide(cam2vicon_rot_list, len(images))
-    ic(cam2vicon_rot_avg)
-    cam2vicon_rot_avg = R.from_euler('XYZ', cam2vicon_rot_avg, degrees=True)
+    # cam2vicon_rot_avg = np.divide(cam2vicon_rot_list, len(images))
+    # ic(cam2vicon_rot_avg)
+    # print(cam2vicon_rot_avg)
+    cam2vicon_rot_median = np.median(cam2vicon_rot_list, axis=0)
+    #print(cam2vicon_rot_median)
+    cam2vicon_rot_avg = R.from_euler('XYZ', cam2vicon_rot_median, degrees=True)
     cam2vicon_rot_avg_mat = cam2vicon_rot_avg.as_matrix()
     ic(cam2vicon_rot_avg_mat)
-    save_cam_location(cam_locations_csv_file, cam_id, cam2vicon_trans_avg.tolist(), cam2vicon_rot_avg_mat.tolist())
-    return cam2vicon_trans_avg, cam2vicon_rot_avg_mat
+    save_cam_location(cam_locations_csv_file, cam_id, cam2vicon_trans_median.tolist(), cam2vicon_rot_avg_mat.tolist())
+    return cam2vicon_trans_median, cam2vicon_rot_avg_mat
 
 #TODO: add header, check if cam id already exists
 def save_cam_location(csv_file, cam_id, cam_trans, cam_rot):
@@ -189,7 +203,7 @@ def invert_homog_transfrom(homog_trans):
 
 
 if __name__ == '__main__':
-    trans, rot = get_cam_location(images, cam_id=1, use_undist=True)
+    trans, rot = get_cam_location(images, cam_id=1, use_undist=False)
     # ic(trans)
     # ic(rot)
     # trans, rot = get_chessboard2vicon_transform(vicon_chessboard_pose_csv_file)
