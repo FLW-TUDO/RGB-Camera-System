@@ -37,47 +37,64 @@ def get_index():
 
     return max(numbers) if numbers != [] else 0
 
-
-# def processImage(image):
-#     """Process the image
-#
-#     Args:
-#         image (numpy.array): current image
-#
-#     Returns:
-#         numpy.array: processed image
-#     """
-#     # image = cv2.flip(image, 0)
-#     # image = cv2.flip(image, 1)
-#     # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-#     # image = cv2.resize(image, (int(2592 / 2), int(2048 / 2)))
-#     return image
-
-
-def main():
+def main(save_vicon=True, append_entries=False):
     """
     Main function
     Retrieves current image from camera, displays it, captures image and stores it
     """
     tracker.connect()
     index = get_index()
+    rotate = False
 
-    with open("vicon_pose_chessboard.csv", "a") as f:
-        writer = csv.writer(f)
-        #writer.writerow(['cam_id', 'image', 'translation', 'rotation'])
+    if save_vicon:
+        if append_entries:
+            flag = "a"
+        else:
+            flag = "w"
+        with open("vicon_pose_chessboard.csv", flag) as f:
+            writer = csv.writer(f)
+            #writer.writerow(['cam_id', 'image', 'translation', 'rotation'])
+
+            while True:
+                image = cam.getImage(rotate=rotate)
+                if image is None:
+                    continue
+
+                cv2.imshow("Camera", image)
+                key = cv2.waitKey(5)
+                if key == 113: #q
+                    cv2.destroyAllWindows()
+                    break
+                if key == 32: #space
+                    index += 1
+                    sys.stdout.write("\rPicture taken: {}".format(index))
+                    sys.stdout.flush()
+
+                    filename = "{}/{}.png".format(save_location, index)
+                    cv2.imwrite(filename, image)
+
+                    if object_name in tracker.aquire_subjects():
+                        vicon_translation = tracker.aquire_Object_Trans(
+                            object_name)
+                        vicon_rotation = tracker.aquire_Object_RotQuaternion(
+                            object_name)
+
+                        writer.writerow(
+                            [f"cam_{cam_id}", f"img_{index}", vicon_translation, vicon_rotation])
+                    else:
+                        print('Object not detected in vicon!')
+    else:
         while True:
-            image = cam.getImage(False)
+            image = cam.getImage(rotate=rotate)
             if image is None:
                 continue
 
-            # image = processImage(image)
-
             cv2.imshow("Camera", image)
             key = cv2.waitKey(5)
-            if key == 113: #q
+            if key == 113:  # q
                 cv2.destroyAllWindows()
                 break
-            if key == 32: #space
+            if key == 32:  # space
                 index += 1
                 sys.stdout.write("\rPicture taken: {}".format(index))
                 sys.stdout.flush()
@@ -85,17 +102,8 @@ def main():
                 filename = "{}/{}.png".format(save_location, index)
                 cv2.imwrite(filename, image)
 
-                if object_name in tracker.aquire_subjects():
-                    vicon_translation = tracker.aquire_Object_Trans(
-                        object_name)
-                    vicon_rotation = tracker.aquire_Object_RotQuaternion(
-                        object_name)
-
-                    writer.writerow(
-                        [f"cam_{cam_id}", f"img_{index}", vicon_translation, vicon_rotation])
-
     cam.close()
 
 
 if __name__ == "__main__":
-    main()
+    main(save_vicon=True, append_entries=True)
