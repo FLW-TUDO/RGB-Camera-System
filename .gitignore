@@ -142,3 +142,4 @@ calibration/cam_loc*
 *.bmp
 *.csv
 recordings/*
+.idea
