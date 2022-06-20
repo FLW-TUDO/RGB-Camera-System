@@ -65,6 +65,16 @@ def invert_homog_transfrom(homog_trans):
     return homog_inv
 
 
+def get_new_frame():
+    vicon.aquire_Frame()
+
+
+def get_obj2vicon_transform_sync(obj_id):
+    obj2vicon_trans = vicon.aquire_Object_Trans_sync(object_name=obj_id)
+    obj2vicon_rot = vicon.aquire_Object_RotEuler_sync(object_name=obj_id)
+    return obj2vicon_trans, obj2vicon_rot
+
+
 if __name__ == '__main__':
     #get_obj_gt_transform(6, 'KLT_8_neu')
     pass
