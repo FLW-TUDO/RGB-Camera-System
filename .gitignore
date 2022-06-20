@@ -136,3 +136,9 @@ doc_imgs/
 *.csv
 
 calibration/calibration_imgs_*
+calibration/cam_loc*
+
+*.png
+*.bmp
+*.csv
+recordings/*
