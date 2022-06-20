@@ -1,10 +1,14 @@
+import time
 from threading import Thread
 import cv2
 import sys
 import numpy as np
+from Camera.CVBCamera import Camera
+from DataCollector import ViconProvider
+
+
 
 # simple class to display camera feed of multiple cameras
-
 
 class Processor(Thread):
     def __init__(self, cameras):
@@ -12,26 +16,6 @@ class Processor(Thread):
         self.cameras = cameras
 
         self.lastframe = 0
-
-    # retrieves image from camera and preprocesses image to display it properly
-    def getImage(
-        self, camera, resolution=(None, None), rotate=(False, False), mask=False
-    ):
-        image = camera.getImage()
-        if image is None:
-            raise Exception("Camera {} is not running".format(camera.id))
-        if mask:
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-            image = image * camera.mask
-        else:
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        if resolution[0] is not None:
-            image = cv2.resize(image, resolution)
-        if rotate[0]:
-            image = cv2.flip(image, 0)
-        if rotate[1]:
-            image = cv2.flip(image, 1)
-        return image
 
     def dummyImage(self, resolution=(None, None)):
         return np.zeros((resolution[0], resolution[1], 3))
@@ -54,31 +38,25 @@ class Processor(Thread):
             dummyImage = True
             print("Be careful you are using an odd number of cameras.")
 
-        resolution = (int(1920 / (int(length / 2))), int(1080 / 2))
-
         while self.running:
             images = []
             for camera in self.cameras:
-                images.append(
-                    self.getImage(
-                        camera, resolution=resolution, rotate=(True, True), mask=False
-                    )
-                )
+                img = camera.getImage()
+                images.append(img)
+
 
             if dummyImage:
                 _ = images.pop(-1)
 
-            # concatanate image Horizontally
+            # concatenate image Horizontally
             Hori1 = np.concatenate(images[: int(length / 2)], axis=1)
-            Hori2 = np.concatenate(images[int(length / 2) :], axis=1)
+            Hori2 = np.concatenate(images[int(length / 2):], axis=1)
 
             image = np.vstack((Hori1, Hori2))
 
             # Displays FPS
             sys.stdout.write(
-                "\rFramerates: {}".format(
-                    [round(camera.fps, 2) for camera in self.cameras]
-                )
+                f"\rFramerates: {[round(camera.fps, 2) for camera in self.cameras]};"
             )
             sys.stdout.flush()
 
@@ -88,17 +66,16 @@ class Processor(Thread):
                 break
 
 
-from Camera.CVBCamera import Camera
-
-# This is the main application to start and controll the cameras
+# This is the main application to start and control the cameras
 
 if __name__ == "__main__":
     # the selected cameras out of [0,1,2,3,4,5,6,7]
-    camera_ids = [0, 1, 2, 3, 4, 5]
+    camera_ids = [2, 3, 4, 5]
+    resolution = (int((1920 / 2) / (int(len(camera_ids) / 2))), int(1080 / 2))
 
     cameras = []
     for cam_id in camera_ids:
-        cameras.append(Camera(cam_id))
+        cameras.append(Camera(cam_id, size_factor=1, resolution=resolution))
         print("Started Camera {}".format(cam_id))
 
     processor = Processor(cameras)
@@ -107,7 +84,7 @@ if __name__ == "__main__":
     while running:
         command = input("Please enter command...\n")
 
-        # close the programm
+        # close the program
         if command == "q":
             running = False
             for camera in cameras:
@@ -117,18 +94,6 @@ if __name__ == "__main__":
             for camera in cameras:
                 if not camera.running:
                     camera.run()
-        # calibrate cameras
-        elif command == "c":
-            processor.stop()
-            for camera in cameras:
-                camera.calibrate()
-            print(
-                "Press q to stop the recording and start processing the calibration data."
-            )
         # display the camera feed
         elif command == "s":
             processor.start()
-        # mask cameras
-        elif command == "m":
-            for camera in cameras:
-                camera.loadMask()
