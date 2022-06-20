@@ -55,11 +55,13 @@ def get_extrinsics(img_path, a, b, scale, mtx, dist):
 
 def create_img_points(img, a, b):   # TODO: check flags
     '''returns concatenated image points and object points'''
+    #ic(img)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     # Find the chess board corners
     ret, corners = cv2.findChessboardCorners(
         gray, (a, b), None)
+    print(corners)
     # If found, add object points, image points (after refining them)
     if ret == True:
         corners2 = cv2.cornerSubPix(
@@ -97,8 +99,8 @@ def undistort(imgs_path, mtx, dist, newcameramtx, roi, visualize):
         img = cv2.imread(fName)
         undistorted_img = cv2.undistort(img, mtx, dist, None, newcameramtx)
         # crop the image
-        x, y, w, h = roi
-        undistorted_img = undistorted_img[y:y+h, x:x+w]
+        # x, y, w, h = roi
+        # undistorted_img = undistorted_img[y:y+h, x:x+w]
         if visualize == True:
             cv2.imshow('Undistorted', undistorted_img)
             key = cv2.waitKey(0)
@@ -177,8 +179,16 @@ if __name__ == "__main__":
     ic(newcameramtx)
     ic(dist)
     ic(roi)
+    # mtx = np.array([[863.7516711 ,   0.        , 651.35968125],
+    #  [  0.        , 862.55744822, 532.62987596],
+    #  [  0.        ,   0.        ,   1.        ]])
+    # newcameramtx = np.array([[800.06060791,   0.        , 651.54195268],
+    #           [  0.        , 799.44244385, 531.27462742],
+    #           [  0.        ,   0.        ,   1.        ]])
+    # dist = np.array([[-0.1796943 ,  0.1315011 , -0.00062923,  0.00034604, -0.02382199]])
+    # roi = (4, 10, 1288, 1001)
     # ret, rvecs, tvecs = get_extrinsics(imgs_path, a, b, scale, mtx, dist)
     # ic(tvecs)
     # ic(rvecs)
-    undistorted_img = undistort(
-        imgs_path, mtx, dist, newcameramtx, roi, visualize=True)
+    # undistorted_img = undistort(
+    #     imgs_path, mtx, dist, newcameramtx, roi, visualize=True)
