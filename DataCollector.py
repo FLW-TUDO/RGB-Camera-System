@@ -10,6 +10,7 @@ from datetime import datetime
 from calibration.obj_gt_pose import get_obj_gt_transform, get_obj2vicon_transform, get_obj2vicon_transform_sync, get_new_frame
 import numpy as np
 
+RECORD_OBJECTS = False
 obj_ids = {
     "KLT_1_neu": {'object_id': 1, 'active': True},
     "KLT_2_neu": {'object_id': 1, 'active': True},
@@ -59,7 +60,7 @@ obj_ids = {
     "moroKopf_2": {'object_id': 6, 'active': True},
     "forklift": {'object_id': 7, 'active': True},
 }
-cameras = [2, 3, 4, 5]  # 0,1,2,3,4,5,6,7
+cameras = [0, 1, 2, 3, 4, 5, 6, 7]  # 0,1,2,3,4,5,6,7
 path = "recordings"
 
 
@@ -106,7 +107,9 @@ class Processor(Thread):
         self.imageIndex = 0
         self.provider = provider
         self.running = True
-        self.record_objects = False
+        self.record_objects = RECORD_OBJECTS
+        self.frequency = 0
+        self.lastframe = time.time()
 
         """
         creates a path for each object with the current recording 
@@ -124,6 +127,10 @@ class Processor(Thread):
         self.row_data = []
         self.start()
 
+    def updateFrequency(self):
+        self.frequency = 1 / (time.time() - self.lastframe)
+        self.lastframe = time.time()
+
     def run(self):
         """
         Gets poses for all objects of interest that could (possibly) be within the camera view.
@@ -139,7 +146,13 @@ class Processor(Thread):
         """
         csv_data = []
         while self.running:
+            while self.lock:
+                time.sleep(0.001)
+
             image = self.camera.getImage()
+
+            if image is None:
+                continue
 
             data = {}
             if not self.record_objects:
@@ -157,6 +170,8 @@ class Processor(Thread):
             data["img_path"] = img_path
             csv_data.append(data)
             self.imageIndex += 1
+            self.updateFrequency()
+            self.lock = True
 
         self.writeData(csv_data)
         csv_data.clear()
@@ -199,21 +214,27 @@ class Processor(Thread):
 
 
 if __name__ == "__main__":
-    image = cv2.imread('recordings/11_28 22_02_2022/camera_2/images/0.png')
-    provider = ViconProvider()
+    image = None
+    provider = ViconProvider() if RECORD_OBJECTS else None
     processors = [Processor(index, provider) for index in cameras]
     print(f"Recording started: {datetime.now().strftime('%H_%M')}")
     start_time = time.time()
     while True:
         if np.all([processor.lock for processor in processors]):
+            if image is None:
+                image = processors[0].camera.getImage()
             cv2.imshow('Recording', image)
-            key = cv2.waitKey(1)
+            key = cv2.waitKey(30)
             if key == 32:
                 cv2.destroyAllWindows()
                 break
             for processor in processors:
                 processor.release()
-            print(processors[0].camera.fps)
+
+            fps = [processor.frequency for processor in processors]
+            print(
+                f"Running with {len(processors)} cameras; Max: {round(max(fps))}; Min: {round(min(fps))}"
+            )
 
     for processor in processors:
         processor.stop()
