@@ -2,12 +2,13 @@ import copy
 import time
 
 from Camera.CVBCamera import Camera
+from PyVicon.ViconProvider import ViconProvider
+from calibration.obj_gt_pose import get_obj_gt_transform
 from threading import Thread
 import os
 import csv
 import cv2
 from datetime import datetime
-from calibration.obj_gt_pose import get_obj_gt_transform, get_obj2vicon_transform, get_obj2vicon_transform_sync, get_new_frame
 import numpy as np
 
 RECORD_OBJECTS = False
@@ -60,44 +61,8 @@ obj_ids = {
     "moroKopf_2": {'object_id': 6, 'active': True},
     "forklift": {'object_id': 7, 'active': True},
 }
-cameras = [0, 1, 2, 3, 4, 5, 6, 7]  # 0,1,2,3,4,5,6,7
+cameras = [0,1,2,3,4,5,6,7] # [1, 2, 5, 6]  # 0,1,2,3,4,5,6,7
 path = "recordings"
-
-
-class ViconProvider(Thread):
-    """
-    Vicon provider will retrieve all objects from the vicon system and store them in memory.
-    This helps with quicker access and will reduce the queries to the vicon system over the network.
-    """
-
-    def __init__(self):
-        Thread.__init__(self)
-        self.running = True
-        self.obj_gt_transf = {obj: {"obj2vicon_trans": None,
-                                    "obj2vicon_rot_mat": None} for obj in list(obj_ids.keys())}
-        for obj in list(obj_ids.keys()):
-            if obj_ids[obj]["active"]:
-                obj2vicon_trans, obj2vicon_rot_mat = get_obj2vicon_transform(
-                    obj)
-                self.obj_gt_transf[obj]["obj2vicon_trans"] = obj2vicon_trans
-                self.obj_gt_transf[obj]["obj2vicon_rot_mat"] = obj2vicon_rot_mat
-        self.start()
-
-    def stop(self):
-        self.running = False
-
-    def run(self):
-        while self.running:
-            get_new_frame()
-            for obj in list(obj_ids.keys()):
-                if obj_ids[obj]["active"]:
-                    obj2vicon_trans, obj2vicon_rot_mat = get_obj2vicon_transform_sync(
-                        obj)
-                    self.obj_gt_transf[obj]["obj2vicon_trans"] = obj2vicon_trans
-                    self.obj_gt_transf[obj]["obj2vicon_rot_mat"] = obj2vicon_rot_mat
-
-    def object_gt_transform(self, objId):
-        return self.obj_gt_transf[objId]["obj2vicon_trans"], self.obj_gt_transf[objId]["obj2vicon_rot_mat"]
 
 
 class Processor(Thread):
@@ -145,14 +110,14 @@ class Processor(Thread):
             }
         """
         csv_data = []
+        last_image_id = -1
         while self.running:
             while self.lock:
-                time.sleep(0.001)
+                time.sleep(0.0001)
 
-            image = self.camera.getImage()
-
-            if image is None:
-                continue
+            image, image_id = self.camera.getImageSync()
+            while image_id == last_image_id or image is None:
+                image, image_id = self.camera.getImageSync()
 
             data = {}
             if not self.record_objects:
@@ -180,6 +145,7 @@ class Processor(Thread):
 
     def stop(self):
         self.running = False
+        self.lock = False
 
     def write_image(self, image):
         cam_path = os.path.join(self.folder_path, f'camera_{self.name}')
@@ -197,8 +163,9 @@ class Processor(Thread):
         cam_path = os.path.join(self.folder_path, f'camera_{self.name}')
         with open(os.path.join(cam_path, "data.csv"), "a", newline="") as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(
-                ['ObjectID', 'ImageName', 'camToObjTrans', 'camToObjRot', 'symmetry'])
+            # writer.writerow(['ObjectID', 'ImageName', 'camToObjTrans', 'camToObjRot', 'symmetry'])
+            if not self.record_objects:
+                writer.writerow(['img_path', 'timestamp'])
             for data in csv_data:
                 if not self.record_objects:
                     writer.writerow([data["img_path"], data["timestamp"]])
@@ -215,7 +182,7 @@ class Processor(Thread):
 
 if __name__ == "__main__":
     image = None
-    provider = ViconProvider() if RECORD_OBJECTS else None
+    provider = ViconProvider(obj_ids) if RECORD_OBJECTS else None
     processors = [Processor(index, provider) for index in cameras]
     print(f"Recording started: {datetime.now().strftime('%H_%M')}")
     start_time = time.time()
@@ -224,7 +191,7 @@ if __name__ == "__main__":
             if image is None:
                 image = processors[0].camera.getImage()
             cv2.imshow('Recording', image)
-            key = cv2.waitKey(30)
+            key = cv2.waitKey(1)
             if key == 32:
                 cv2.destroyAllWindows()
                 break
@@ -235,11 +202,15 @@ if __name__ == "__main__":
             print(
                 f"Running with {len(processors)} cameras; Max: {round(max(fps))}; Min: {round(min(fps))}"
             )
+        else:
+            time.sleep(0.0001)
 
     for processor in processors:
+        processor.release()
         processor.stop()
         processor.join()
-    provider.stop()
+    if RECORD_OBJECTS:
+        provider.stop()
 
     print(
-        f"Recording ended: {datetime.now().strftime('%H_%M')}; Total Images taken: {np.sum([processor.imageIndex for processor in processors])} FPS: {np.sum([processor.imageIndex for processor in processors]) / (time.time() - start_time)}")
+        f"Recording ended: {datetime.now().strftime('%H_%M')}; Total Time: {round((time.time() - start_time), 2)} Sec; Total Images taken: {np.sum([processor.imageIndex for processor in processors])}; Total FPS: {np.sum([processor.imageIndex for processor in processors]) / (time.time() - start_time) / len(processors)}")
