@@ -119,6 +119,8 @@ class Processor(Thread):
             while image_id == last_image_id or image is None:
                 image, image_id = self.camera.getImageSync()
 
+            last_image_id = image_id
+
             data = {}
             if not self.record_objects:
                 data["timestamp"] = time.time()  # record time in ms
