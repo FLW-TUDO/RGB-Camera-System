@@ -4,7 +4,7 @@ import cv2
 import sys
 import numpy as np
 from Camera.CVBCamera import Camera
-from DataCollector import ViconProvider
+from PyVicon.ViconProvider import ViconProvider
 
 
 
@@ -70,8 +70,8 @@ class Processor(Thread):
 
 if __name__ == "__main__":
     # the selected cameras out of [0,1,2,3,4,5,6,7]
-    camera_ids = [2, 3, 4, 5]
-    resolution = (int((1920 / 2) / (int(len(camera_ids) / 2))), int(1080 / 2))
+    camera_ids = [1,2,5,6]
+    resolution = (int((1920 / 2) / (int(len(camera_ids) / 2))), int(1080 / 2)) # for 4 cams
 
     cameras = []
     for cam_id in camera_ids:
